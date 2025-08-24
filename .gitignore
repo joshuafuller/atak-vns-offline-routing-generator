@@ -1,0 +1,30 @@
+# Generated output data
+output/*/
+output/*.zip
+output/*.osm.pbf
+output/*.poly
+output/*.kml
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker build context
+.docker/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local

@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# ==============================================================================
+# VNS Offline Data Generator - Runner Script
+#
+# Description:
+# This is the main script that users will execute. It handles building the
+# Docker image and running the data generation process within a container.
+#
+# Usage:
+# ./run.sh <state-name>
+# e.g., ./run.sh california
+# e.g., ./run.sh new-york
+# ==============================================================================
+
+# --- Configuration ---
+IMAGE_NAME="vns-data-generator"
+IMAGE_TAG="1.0"
+
+# --- Script Logic ---
+
+# Check if a state name was provided as an argument
+if [ -z "$1" ]; then
+    echo "Error: No state name provided."
+    echo "Usage: ./run.sh <state-name>"
+    echo "Example: ./run.sh florida"
+    exit 1
+fi
+
+STATE_NAME=$1
+
+# Create the output directory on the host machine if it doesn't exist
+# This is where the final data files will be placed.
+mkdir -p ./output
+
+echo "--- VNS Offline Data Generator ---"
+
+# Check if the Docker image already exists
+if [[ "$(docker images -q ${IMAGE_NAME}:${IMAGE_TAG} 2> /dev/null)" == "" ]]; then
+  echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' not found. Building it now..."
+  echo "This may take several minutes, but it only needs to be done once."
+  docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+  if [ $? -ne 0 ]; then
+    echo "Error: Docker image build failed. Please check your Docker setup and Dockerfile."
+    exit 1
+  fi
+  echo "Docker image built successfully."
+else
+  echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' found."
+fi
+
+echo "Starting data generation for: ${STATE_NAME}"
+echo "The process can take a very long time depending on the state's size."
+echo "Please be patient..."
+
+# Run the data generation script inside a Docker container
+# -v "$(pwd)/output:/app/output": This mounts the local './output' directory
+#   into the container at '/app/output'. Any files created in '/app/output'
+#   inside the container will appear in './output' on your local machine.
+# --rm: This flag automatically removes the container when it exits, keeping
+#   your system clean.
+docker run --rm \
+    -v "$(pwd)/output:/app/output" \
+    ${IMAGE_NAME}:${IMAGE_TAG} \
+    bash -c "./generate-data.sh ${STATE_NAME}"
+
+# Check the exit code of the Docker command
+if [ $? -eq 0 ]; then
+    echo "---"
+    echo "✅ Data generation completed successfully!"
+    echo ""
+    echo "📁 Generated files are located in: './output' directory"
+    echo "📦 Both folder and ZIP file are ready for transfer to your device"
+    echo ""
+    echo "📱 VNS SETUP EXAMPLE - Complete folder structure on your Android device:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Internal Storage/"
+    echo "└── atak/"
+    echo "    └── tools/"
+    echo "        └── VNS/"
+    echo "            └── GH/"
+    echo "                ├── ${STATE_NAME}/          ← Your new routing data"
+    echo "                │   ├── ${STATE_NAME}.kml"
+    echo "                │   ├── ${STATE_NAME}.poly"
+    echo "                │   ├── edges"
+    echo "                │   ├── geometry"
+    echo "                │   ├── nodes"
+    echo "                │   └── ... (other files)"
+    echo "                ├── florida/        ← Example: Other states you might have"
+    echo "                └── california/     ← Example: Additional routing data"
+    echo ""
+    echo "🔧 VNS will automatically detect all folders in the GH directory!"
+else
+    echo "---"
+    echo "❌ Error: Data generation failed. Please check the logs above for details."
+fi
