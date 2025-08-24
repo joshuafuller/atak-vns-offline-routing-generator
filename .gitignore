@@ -28,3 +28,13 @@ Thumbs.db
 # Environment files
 .env
 .env.local
+
+plan/
+
+# Go binaries
+vns-interactive
+vns-interactive.exe
+vns-interactive-darwin-*
+
+# Go build artifacts
+go-src/go.sum

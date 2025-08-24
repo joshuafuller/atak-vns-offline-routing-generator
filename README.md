@@ -1,6 +1,7 @@
-# 🗺️ ATAK VNS Offline Routing Generator
+# 🗺️ ATAK VNS Offline Routing Generator v2.0
 
-**Automated generation of VNS-compatible offline routing files for any U.S. state**
+**Automated generation of VNS-compatible offline routing files for any global region**  
+🆕 **NEW**: Interactive global region selection with 250+ regions worldwide!
 
 [![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -8,7 +9,7 @@
 
 ## 📋 Overview
 
-This tool automates the creation of VNS-compatible offline routing files for any U.S. state, transforming a complex multi-step manual process into a single command. 
+This tool automates the creation of VNS-compatible offline routing files for **any global region**, transforming a complex multi-step manual process into a simple interactive selection menu. 
 
 The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper v1.0 routing data with precise file structures. This generator handles all the complexity:
 
@@ -21,32 +22,57 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
 - **Pre-positioned data** - Deploy with confidence knowing routing will work
 - **Complements online routing** - Use alongside Google API when connectivity allows
 
+- ✅ **Global coverage**: 250+ regions across all continents
+- ✅ **Interactive selection**: Beautiful terminal UI for region discovery
+- ✅ **Smart caching**: Avoids re-downloading unchanged files  
+- ✅ **Multi-region processing**: Select and process multiple regions at once
+- ✅ **Zero dependencies**: Single binary, no Python/pip/venv required
 - ✅ Downloads latest OSM data from Geofabrik
 - ✅ Processes data with GraphHopper v1.0 (VNS-compatible version)
 - ✅ Creates proper VNS folder structure and files
 - ✅ Generates ZIP files for easy device transfer
-- ✅ Provides clear installation instructions
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - **Docker** installed and running on your system ([Download Docker](https://www.docker.com/get-started))
 
-### Usage
-1. Clone or download this repository
-2. Open a terminal in the project directory
-3. Make scripts executable (macOS/Linux only):
-   ```bash
-   chmod +x run.sh
-   ```
-4. Generate routing data for any U.S. state:
-   ```bash
-   # Examples
-   ./run.sh california
-   ./run.sh texas
-   ./run.sh new-york
-   ./run.sh north-dakota
-   ```
+### NEW: Interactive Global Selection (v2.0)
+```bash
+# Download the interactive binary for your platform
+# Linux:
+curl -L https://github.com/joshuafuller/atak-vns-offline-routing-generator/releases/latest/download/vns-interactive -o vns-interactive
+chmod +x vns-interactive
+
+# Launch interactive region selection
+./vns-interactive
+```
+
+**Interactive Features:**
+- 🌍 Browse 250+ global regions (Europe, Canada, Australia, Asia, etc.)
+- 🔍 Search and filter regions by name
+- ☑️ Multi-select regions with spacebar
+- ⚡ Smart caching prevents re-downloading large files
+- 🚀 Process multiple regions in one batch
+
+### Traditional CLI (Still Available)
+```bash
+# Clone or download this repository
+git clone https://github.com/joshuafuller/atak-vns-offline-routing-generator
+cd atak-vns-offline-routing-generator
+
+# Make scripts executable (macOS/Linux)
+chmod +x run.sh
+
+# Generate routing data for any region:
+./run.sh california          # US States
+./run.sh germany            # European Countries  
+./run.sh ontario            # Canadian Provinces
+./run.sh new-south-wales    # Australian States
+
+# Or use the interactive binary directly:
+./vns-interactive --process california,germany,france
+```
 
 ### Processing Times (Approximate)
 | State Size | Example | Time | Output Size |
@@ -261,6 +287,51 @@ done
 docker run --rm -v "$(pwd)/output:/app/output" \
     vns-data-generator:1.0 bash -x ./generate-data.sh california
 ```
+
+## 🆕 What's New in v2.0
+
+### Global Region Support
+- **250+ regions** worldwide vs. 50+ US states in v1.0
+- **All continents**: Europe, Asia, North America, South America, Africa, Oceania  
+- **Countries**: Germany, France, Canada, Australia, Japan, etc.
+- **Sub-regions**: German states, Canadian provinces, Australian states, etc.
+
+### Interactive Terminal UI
+- **Beautiful interface** built with Go + BubbleTea
+- **Search and filter** regions by typing
+- **Multi-selection** with spacebar and arrow keys
+- **Real-time feedback** and progress indication
+
+### Smart Caching System
+- **Automatic file caching** prevents re-downloading unchanged files
+- **HTTP header checking** (ETag, Last-Modified) for change detection
+- **Huge bandwidth savings** - Florida (600MB) downloads once, reuses cached version
+- **Cache management** tools (`--cache-info`, `--cache-clear`)
+
+### Zero Dependencies
+- **Single binary** per platform (Linux, Windows, macOS)
+- **No Python/pip/venv** setup required
+- **No external dependencies** beyond Docker for processing
+- **Easy distribution** via GitHub releases
+
+### Backward Compatibility
+- **Existing CLI works unchanged**: `./run.sh california`
+- **Same output format** and file structure as v1.0
+- **Same VNS compatibility** and installation process
+
+### Usage Examples
+```bash
+# Interactive mode
+./vns-interactive
+
+# Direct processing
+./vns-interactive --process germany,france,netherlands
+
+# Traditional CLI (unchanged)
+./run.sh california
+```
+
+---
 
 ## 📄 License
 
