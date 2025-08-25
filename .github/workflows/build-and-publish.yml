@@ -38,9 +38,9 @@ jobs:
       with:
         token: ${{ github.token }}
         branch: main
-        patchList: fix:,bug:,perf:,refactor:,test:,docs:,chore:
-        minorList: feat:
-        majorList: BREAKING CHANGE:,feat!:,fix!:
+        patchList: "fix:,bug:,perf:,refactor:,test:,docs:,chore:"
+        minorList: "feat:"
+        majorList: "BREAKING CHANGE:,feat!:,fix!:"
 
     - name: Create and push tag
       if: github.ref == 'refs/heads/main' && steps.version.outputs.next != ''
