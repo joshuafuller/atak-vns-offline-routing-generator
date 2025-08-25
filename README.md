@@ -44,7 +44,7 @@ docker run --rm \
   -v "$(pwd)/output:/app/output" \
   -v "$(pwd)/cache:/app/cache" \
   ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
-  ./generate-data.sh europe/germany
+  ./generate-data.sh germany
 ```
 
 ### 🛠️ Full setup (recommended for regular use)
@@ -58,7 +58,7 @@ docker run --rm \
 chmod +x run.sh
 
 # Generate data for any region
-./run.sh california
+./run.sh us/california
 ./run.sh great-britain  
 ./run.sh germany
 
