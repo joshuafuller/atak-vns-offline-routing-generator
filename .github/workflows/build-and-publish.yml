@@ -31,24 +31,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Get next version
-      id: version
-      uses: ietf-tools/semver-action@v1
-      if: github.ref == 'refs/heads/main'
-      with:
-        token: ${{ github.token }}
-        branch: main
-        patchList: "fix:,bug:,perf:,refactor:,test:,docs:,chore:"
-        minorList: "feat:"
-        majorList: "BREAKING CHANGE:,feat!:,fix!:"
-
-    - name: Create and push tag
-      if: github.ref == 'refs/heads/main' && steps.version.outputs.next != ''
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git tag "v${{ steps.version.outputs.next }}"
-        git push origin "v${{ steps.version.outputs.next }}"
 
     - name: Extract metadata
       id: meta
