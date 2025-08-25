@@ -44,6 +44,7 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
    # Examples
    ./run.sh us/california
    ./run.sh germany
+   ./run.sh great-britain
    ./run.sh india
    ```
 5. Need help finding a region path? List all available downloads:
@@ -54,10 +55,11 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
 ### Processing Times (Tested)
 | Region Size | Example | Processing Time | Output Size |
 |-------------|---------|-----------------|-------------|
-| Small | Malta | ~10 seconds | ~2.6 MB |
-| Small | Delaware | ~17 seconds | ~9.1 MB |
-| Medium | Tennessee | ~3-5 minutes | ~80 MB |
-| Large | Texas/California | ~10+ minutes | ~260+ MB |
+| Small | Malta | ~10 seconds | 2.6 MB |
+| Small | Delaware | ~17 seconds | 9.1 MB |
+| Medium | Great Britain | ~5-8 minutes | 381 MB |
+| Large | Germany | ~10+ minutes | 760 MB |
+| Large | Ukraine | ~10+ minutes | 232 MB |
 
 ## 📱 Installing on Your Android Device
 
