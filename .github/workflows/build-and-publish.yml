@@ -6,6 +6,8 @@ on:
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -29,24 +31,56 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Get next version
+      id: version
+      uses: ietf-tools/semver-action@v1
+      if: github.ref == 'refs/heads/main'
+      with:
+        token: ${{ github.token }}
+        branch: main
+        patchList: fix:,bug:,perf:,refactor:,test:,docs:,chore:
+        minorList: feat:
+        majorList: BREAKING CHANGE:,feat!:,fix!:
+
+    - name: Create and push tag
+      if: github.ref == 'refs/heads/main' && steps.version.outputs.next != ''
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag "v${{ steps.version.outputs.next }}"
+        git push origin "v${{ steps.version.outputs.next }}"
+
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
+          # Branch name for PRs and feature branches
           type=ref,event=branch
           type=ref,event=pr
+          # Semver tags from Git tags (v1.2.3 -> 1.2.3, 1.2, 1)
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
           type=semver,pattern={{major}}
+          # Latest tag for main branch
           type=raw,value=latest,enable={{is_default_branch}}
-          type=raw,value=1.1,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=ATAK VNS Offline Routing Generator
+          org.opencontainers.image.description=Automated generation of VNS-compatible offline routing files
+          org.opencontainers.image.vendor=ATAK Community
+          org.opencontainers.image.source=https://github.com/joshuafuller/atak-vns-offline-routing-generator
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

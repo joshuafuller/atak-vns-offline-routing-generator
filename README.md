@@ -1,309 +1,98 @@
-# 🗺️ ATAK VNS Offline Routing Generator
+# ATAK VNS Offline Routing Generator
 
-**Automated generation of VNS-compatible offline routing files for any Geofabrik region**
+**Creates backup navigation files for ATAK's VNS plugin - works without cell service**
 
 [![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![ATAK](https://img.shields.io/badge/ATAK-VNS%20Plugin-orange?style=flat-square)](https://tak.gov/)
+[![ATAK](https://img.shields.io/badge/ATAK-VNS%20Plugin-orange?style=flat-square)](https://tak.gov/plugins/vns)
 
-## 📋 Overview
+## Why This Tool Matters
 
-This tool automates the creation of VNS-compatible offline routing files for any region available on [Geofabrik](https://download.geofabrik.de/), transforming a complex multi-step manual process into a single command.
+**Real-world example**: Your team is responding to a wildfire in remote mountains where cell towers are down. ATAK's normal navigation stops working, but with these offline files installed, navigation continues to work perfectly - no connectivity required.
 
-The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper v1.0 routing data with precise file structures. This generator handles all the complexity:
+**Perfect for emergency operations, search & rescue, and remote deployments where internet connectivity is unavailable or unreliable.**
 
-### 🔥 Critical for Emergency Operations
-**Perfect for wildfire operations, search & rescue, and remote deployments where internet connectivity is unavailable or unreliable.** While VNS can use Google Maps API for real-time traffic and road closures, this offline data ensures navigation capabilities when teams are beyond cellular coverage.
+## What You Need
 
-**Key Benefits:**
-- **Zero connectivity required** - Works completely offline
-- **Reliable in emergencies** - No dependence on cell towers or internet
-- **Pre-positioned data** - Deploy with confidence knowing routing will work
-- **Complements online routing** - Use alongside Google API when connectivity allows
+- **Docker** - Free software that runs our map processing ([Download Docker](https://www.docker.com/get-started))
+- **Internet connection** for downloading maps
+- **No programming knowledge required** - just follow the steps
 
-- ✅ Downloads latest OSM data from Geofabrik
-- ✅ Processes data with GraphHopper v1.0 (VNS-compatible version)
-- ✅ Creates proper VNS folder structure and files
-- ✅ Generates ZIP files for easy device transfer
-- ✅ Provides clear installation instructions
+## Quick Start
 
-## 🚀 Quick Start
+### 1. Get the Tool
+[Download ZIP](https://github.com/joshuafuller/atak-vns-offline-routing-generator/archive/refs/heads/main.zip) → Extract to a folder
 
-### Prerequisites
-- **Docker** installed and running on your system ([Download Docker](https://www.docker.com/get-started))
-- **Internet connection** for downloading maps and Docker images
+### 2. Generate Routing Data
+```bash
+# Make scripts executable (Mac/Linux only)
+chmod +x run.sh
 
-### Usage
-> **✨ Zero setup required!** The script automatically downloads a pre-built Docker image on first run.
-1. Clone or download this repository
-2. Open a terminal in the project directory
-3. Make scripts executable (macOS/Linux only):
-   ```bash
-   chmod +x run.sh
-   ```
-4. Generate routing data for any Geofabrik region:
-   ```bash
-   # Examples
-   ./run.sh us/california
-   ./run.sh germany
-   ./run.sh great-britain
-   ./run.sh india
-   ```
-5. Need help finding a region path? List all available downloads:
-   ```bash
-   ./list-regions.sh
-   ```
+# Generate data for any region
+./run.sh california
+./run.sh great-britain  
+./run.sh germany
 
-### Processing Times (Tested)
+# Need help finding regions?
+./list-regions.sh
+```
+
+### 3. Install on Your Device
+1. Copy the generated ZIP file to your Android device
+2. Extract and place folder at: `Internal Storage/atak/tools/VNS/GH/[region-name]/`
+3. Restart ATAK
+
+**That's it!** Navigation now works offline in that region.
+
+## Processing Times
+
 | Region Size | Example | Processing Time | Output Size |
 |-------------|---------|-----------------|-------------|
 | Small | Malta | ~10 seconds | 2.6 MB |
 | Small | Delaware | ~17 seconds | 9.1 MB |
 | Medium | Great Britain | ~5-8 minutes | 381 MB |
 | Large | Germany | ~10+ minutes | 760 MB |
-| Large | Ukraine | ~10+ minutes | 232 MB |
 
-## 🐳 Docker Image Options
+## Important Disclaimers
 
-**Default (Recommended)**: Uses pre-built images from GitHub Container Registry
-- ✅ **Faster startup** - No build time required  
-- ✅ **Always up-to-date** - Automatically pulls versioned images (v1.1)
-- ✅ **No dependencies** - No need for build tools locally
+**VNS Plugin Required**: This tool only generates data files. You need the actual VNS plugin from TAK.gov:
+- **Get VNS Plugin**: https://tak.gov/plugins/vns
+- **Requires TAK.gov account** (free registration at tak.gov)  
+- **Plugin support**: Contact TAK.gov - we are not affiliated with the VNS plugin makers
 
-**Local Build**: Force local Docker build if needed
-```bash
-USE_PREBUILT=false ./run.sh great-britain
-```
+**Data Limitations**: Offline routing won't know about recent road closures, current traffic, or temporary restrictions. Use both online and offline routing together when possible.
 
-## 📱 Installing on Your Android Device
+## Documentation
 
-After generation completes, you'll have:
-- 📁 **Folder**: `./output/[region-name]/` - Raw routing data
-- 📦 **ZIP file**: `./output/[region-name].zip` - Compressed for transfer
+**New to this tool?**
+- [Complete Setup Guide](docs/setup.md) - Step-by-step installation from scratch
+- [Troubleshooting](docs/troubleshooting.md) - Solutions to common problems
 
-### Installation Steps:
-1. **Transfer** the ZIP file to your Android device
-2. **Extract** the ZIP to get the region folder
-3. **Copy** the entire folder to your device at:
-   ```
-   /storage/emulated/0/atak/tools/VNS/GH/[region-name]/
-   ```
-   OR
-   ```
-   Internal Storage/atak/tools/VNS/GH/[region-name]/
-   ```
+**Need technical details?**
+- [Architecture](docs/architecture.md) - How it all works under the hood
+- [Folder Structure](docs/folder-structure.md) - Understanding cache and output folders
+- [Tech Stack](docs/tech-stack.md) - Complete technology documentation
 
-### Required Folder Structure on Device:
-```
-Internal Storage/
-└── atak/
-    └── tools/
-        └── VNS/
-            └── GH/
-                ├── california/      ← Your generated routing data
-                ├── texas/           ← Additional regions
-                └── florida/         ← VNS detects all folders here
-```
+**Keeping up to date?**
+- [Updating Guide](docs/updating.md) - How to get the latest version
 
-## 🛠️ How It Works
+**Contributing?**
+- [Versioning Guide](VERSIONING.md) - Commit message format for automatic releases
 
-### VNS Routing Architecture Overview
-The ATAK VNS (Vehicle Navigation System) supports two types of routing:
+## Support
 
-1. **🌐 Online Routing** - Uses private routing servers (OSRM) with real-time data
-2. **📱 Offline Routing** - Uses local GraphHopper files for zero-connectivity operations
+**For this data generator tool:**
+- **Issues**: [Open a GitHub issue](https://github.com/joshuafuller/atak-vns-offline-routing-generator/issues) for problems generating routing files
 
-**This tool generates the offline routing data** that gets installed directly on ATAK devices.
+**For VNS plugin issues (NOT our responsibility):**
+- **VNS Plugin Support**: https://tak.gov
+- **Plugin Installation/Usage**: Contact TAK.gov support
 
-### The Complete VNS Ecosystem
-According to official VNS documentation, a full routing system includes:
+**We only support the data generation process, not the VNS plugin itself.**
 
-**Server Components** (Not covered by this tool):
-- Private routing server using OSRM (Open Source Routing Machine)
-- OAuth2 authentication and user management
-- API endpoints for real-time routing requests
-- Docker Compose orchestration
-
-**Client Components** (Generated by this tool):
-- GraphHopper v1.0 routing data files
-- Regional boundary files (.poly, .kml)
-- Timestamp metadata for data freshness
-- VNS-compatible folder structure
-
-### Our Tool's Process
-This generator automates the "offline routing data" portion:
-
-1. **Download**: Fetches latest OSM data (.osm.pbf), boundary files (.poly, .kml) from Geofabrik
-2. **Process**: Runs GraphHopper v1.0 import with optimized memory settings (4GB heap)
-3. **Structure**: Creates VNS-compatible folder structure with all required files
-4. **Package**: Generates both folder and ZIP file outputs
-
-### Why Offline Routing Matters
-- **Emergency Operations**: Wildfire, search & rescue, disaster response
-- **Remote Deployments**: Beyond cellular coverage areas
-- **Mission Critical**: No dependency on external infrastructure
-- **Redundancy**: Backup when private routing servers are unavailable
-
-### Generated Files:
-```
-[region-name]/
-├── [region-name].kml          ← KML boundary file
-├── [region-name].poly         ← POLY boundary file
-├── [region-name].timestamp    ← Region-named timestamp
-├── timestamp                 ← Generic timestamp
-├── edges                     ← GraphHopper routing data
-├── geometry                  ← Binary routing files
-├── location_index            ← Location index data
-├── nodes                     ← Node data
-├── nodes_ch_car              ← Car-specific node data
-├── properties                ← Graph properties
-├── shortcuts_car             ← Car routing shortcuts
-├── string_index_keys         ← String index keys
-└── string_index_vals         ← String index values
-```
-
-## 🏗️ Project Structure
-
-```
-atak-vns-offline-routing-generator/
-├── README.md              ← This file
-├── Dockerfile             ← Docker container definition
-├── run.sh                 ← Main entry point script
-├── generate-data.sh       ← Core data processing script
-└── output/                ← Generated routing data (created after first run)
-    ├── [region-name]/      ← VNS-ready folder
-    └── [region-name].zip   ← Compressed archive
-```
-
-## ⚙️ Technical Details
-
-### Dependencies (Handled by Docker):
-- **OpenJDK 8** - Required by GraphHopper v1.0
-- **Maven 3** - For building GraphHopper from source
-- **GraphHopper v1.0** - Specific version compatible with VNS
-- **wget** - For downloading OSM data
-- **zip** - For creating compressed archives
-
-### Memory Requirements:
-- **Minimum**: 4GB RAM (configured automatically)
-- **Recommended**: 8GB+ RAM for large regions like California or Texas
-
-### Listing Available Regions
-Run `./list-regions.sh` to display the ~500 region paths published by Geofabrik. Use any of these paths with `run.sh` to generate data.
-
-### Data Freshness:
-This tool generates routing data from the latest available OpenStreetMap data via Geofabrik (typically updated weekly). For real-time conditions like:
-- **Road closures** (accidents, construction, emergencies)  
-- **Live traffic conditions**
-- **Temporary restrictions**
-
-VNS can be configured to use Google Maps API when internet is available. The offline data generated by this tool serves as the essential fallback for when connectivity is lost.
-
-### Official VNS Process (What This Tool Automates):
-According to VNS documentation, manually creating offline routing data requires:
-
-1. **Data Collection**:
-   - Download `.osm.pbf` files from Geofabrik
-   - Obtain matching `.poly` boundary files
-   - Generate `.kml` files from `.poly` files using border utilities
-   - Create `.timestamp` files with ISO8601 timestamps
-
-2. **Processing Environment Setup**:
-   - Install Docker and Java
-   - Build custom GraphHopper v1.0 Docker container
-   - Configure memory settings and build parameters
-   - Handle version compatibility issues
-
-3. **GraphHopper Processing**:
-   - Run `gh_dataprep` Docker container
-   - Execute GraphHopper import with correct config
-   - Generate `.ghz` region files (server format)
-   - Create proper directory structures
-
-4. **File Organization**:
-   - Structure data for VNS consumption
-   - Include all required metadata files
-   - Ensure proper naming conventions
-
-**This tool automates all these steps** into a single command, ensuring consistency and eliminating manual configuration errors.
-
-## 🔧 Advanced Usage
-
-### Custom Docker Build:
-```bash
-# Rebuild Docker image with latest changes
-docker build -t vns-data-generator:1.0 .
-
-# Run with custom memory settings
-docker run --rm -v "$(pwd)/output:/app/output" \
-    -e JAVA_OPTS="-Xmx8192m -Xms8192m" \
-    vns-data-generator:1.0 ./generate-data.sh california
-```
-
-### Batch Processing Multiple Regions:
-```bash
-# Process multiple regions
-for region in north-america/us/california europe/germany; do
-    ./run.sh $region
-done
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues:
-
-**"Docker not found"**
-- Install Docker and ensure it's running
-- On Windows: Restart after Docker installation
-
-**"Permission denied"**
-- On macOS/Linux: Run `chmod +x run.sh`
-- On Windows: Use PowerShell or Git Bash
-
-**"Out of memory errors"**
-- Large regions need significant RAM
-- Close other applications
-- Consider processing smaller regions first
-
-**"Network timeouts"**
-- Check internet connection
-- Geofabrik servers may be busy - retry later
-
- **"VNS not detecting routing data"**
- - Ensure folder is copied to exact path: `/storage/emulated/0/atak/tools/VNS/GH/[region-name]/`
- - Check that all required files are present (see Generated Files section)
-- Restart ATAK after copying new routing data
-
-### Debug Mode:
-```bash
-# Run with verbose output
-docker run --rm -v "$(pwd)/output:/app/output" \
-    vns-data-generator:1.0 bash -x ./generate-data.sh california
-```
-
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-Contributions welcome! Please feel free to submit issues and pull requests.
-
-### Development Setup:
-1. Fork the repository
-2. Make your changes
-3. Test with a small region (Delaware recommended)
-4. Submit a pull request
-
-## 📞 Support
-
-- **Issues**: Open a GitHub issue
-- **ATAK/VNS Questions**: Consult official ATAK documentation
-- **GraphHopper Questions**: See [GraphHopper documentation](https://www.graphhopper.com/)
-
-## ⚠️ Disclaimer
-
-This tool is for legitimate navigation and mapping purposes only. Users are responsible for complying with all applicable laws and terms of service for the data sources used.
 
 ---
 

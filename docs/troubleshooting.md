@@ -1,5 +1,7 @@
 # Troubleshooting Guide
 
+**Current Version**: 1.1
+
 ## Common Issues and Solutions
 
 ### Docker Issues
@@ -37,7 +39,7 @@
 
 2. **Run with sudo** (temporary):
    ```bash
-   sudo ./run.sh california
+   sudo ./run.sh us/delaware
    ```
 
 3. **Start Docker Desktop** (Windows/macOS):
@@ -68,7 +70,7 @@
 **Causes**:
 - Network connectivity issues
 - Geofabrik server temporarily unavailable
-- Incorrect state name format
+- Incorrect region path format
 
 **Solutions**:
 1. **Verify internet connection**:
@@ -76,23 +78,49 @@
    ping download.geofabrik.de
    ```
 
-2. **Check state name format**:
-   - Use lowercase with dashes: `new-york` not `New York`
-   - Valid examples: `california`, `north-carolina`, `west-virginia`
+2. **Check region path format**:
+   - Use Geofabrik API paths: `us/california`, `europe/germany`
+   - Valid examples: `us/delaware`, `us/north-carolina`, `europe/malta`
+   - Run `./list-regions.sh` to see all available regions
 
 3. **Manual verification**:
    ```bash
-   # Test URL manually
-   wget -q --spider http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-   echo $?  # Should return 0 if successful
+   # Test API access
+   wget -qO- "https://download.geofabrik.de/index-v1-nogeom.json" | jq '.features[] | select(.properties.id == "us/california")'
    ```
 
 4. **Retry after delay**:
    ```bash
    # Wait and retry
    sleep 60
-   ./run.sh california
+   ./run.sh us/california
    ```
+
+#### "Region not found" error from API
+**Symptoms**: `ERROR=Region not found: [region-name]`
+
+**Note**: Version 1.1 includes improved region discovery and worldwide support.
+
+**Solutions**:
+1. **Use correct region paths**:
+   ```bash
+   # List all available regions with proper hierarchy
+   ./list-regions.sh
+   
+   # US states use 'us/' prefix
+   ./run.sh us/california
+   
+   # European countries use 'europe/' prefix  
+   ./run.sh europe/germany
+   
+   # Other continents have their own prefixes
+   ./run.sh africa/djibouti
+   
+   # Worldwide regions are also supported
+   ./run.sh north-america
+   ```
+
+2. **Check for typos** in region names (case-sensitive)
 
 #### "Failed to download POLY file" (Exit code 8)
 **Symptoms**: Download fails specifically for `.poly` file
@@ -112,7 +140,7 @@
 **Symptoms**: KML download fails while OSM and POLY succeed
 
 **Solutions**:
-1. **Some states may not have KML files** - this is rare but possible
+1. **Some regions may not have KML files** - this is rare but possible
 2. **Check Geofabrik directly**: Visit the website and verify KML availability
 3. **Continue without KML** (modify script temporarily if needed)
 
@@ -127,7 +155,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 **Solutions**:
 1. **Increase available system RAM**:
    - Close other applications
-   - Ensure 8GB+ total system RAM for large states
+   - Ensure 8GB+ total system RAM for large regions
 
 2. **Modify memory allocation**:
    ```bash
@@ -135,9 +163,9 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
    sed -i 's/-Xmx4096m -Xms4096m/-Xmx6144m -Xms6144m/' generate-data.sh
    ```
 
-3. **Process smaller states first**:
-   - Test with Delaware (~10MB output)
-   - Gradually work up to larger states
+3. **Process smaller regions first**:
+   - Test with Malta (~9MB output)
+   - Gradually work up to larger regions
 
 4. **Monitor system resources**:
    ```bash
@@ -152,7 +180,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 
 **Solutions**:
 1. **Increase Docker memory limit** (Docker Desktop):
-   - Settings → Resources → Memory → Increase limit
+   - Settings → Resources → Memory → Increase limit to 8GB+
 
 2. **Use swap space** (Linux):
    ```bash
@@ -171,13 +199,13 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 **Solutions**:
 1. **Check input file integrity**:
    ```bash
-   file output/california-latest.osm.pbf
+   file cache/california.osm.pbf
    # Should show: "Protocol Buffer Binary Format"
    ```
 
 2. **Verify GraphHopper build**:
    ```bash
-   docker run --rm -it vns-data-generator:1.0 bash
+   docker run --rm -it ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest bash
    # Inside container:
    ls -la graphhopper/web/target/
    # Should show: graphhopper-web-1.0-SNAPSHOT.jar
@@ -185,17 +213,20 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 
 3. **Run with debug output**:
    ```bash
-   docker run --rm -v "$(pwd)/output:/app/output" \
-     vns-data-generator:1.0 bash -x ./generate-data.sh california
+   docker run --rm \
+     -v "$(pwd)/output:/app/output" \
+     -v "$(pwd)/cache:/app/cache" \
+     ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
+     bash -x ./generate-data.sh us/delaware
    ```
 
 4. **Clean rebuild**:
    ```bash
-   docker build --no-cache -t vns-data-generator:1.0 .
+   docker build --no-cache -t local-vns:latest .
    ```
 
 #### "Properties file not found"
-**Symptoms**: `Error: Properties file not found in [state]. GraphHopper import may have failed.`
+**Symptoms**: `Error: Properties file not found in [region]. GraphHopper import may have failed.`
 
 **Solutions**:
 1. **This indicates GraphHopper import failed silently**
@@ -205,7 +236,8 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
    ```
 3. **Verify OSM file is not corrupted**:
    ```bash
-   osmium fileinfo output/california-latest.osm.pbf
+   file cache/california.osm.pbf
+   # Should show proper PBF format
    ```
 
 ### File System Issues
@@ -223,7 +255,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 2. **Docker volume permissions** (Linux):
    ```bash
    # Ensure output directory is writable
-   sudo chown -R $USER:$USER output/
+   sudo chown -R $USER:$USER output/ cache/
    ```
 
 3. **SELinux issues** (RHEL/CentOS):
@@ -238,13 +270,13 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 1. **Check available space**:
    ```bash
    df -h
-   du -sh output/
+   du -sh output/ cache/
    ```
 
 2. **Clean up temporary files**:
    ```bash
    docker system prune -f
-   rm -f output/*.osm.pbf  # Remove downloaded files
+   rm -f output/*.osm.pbf  # Remove any stray temporary files
    ```
 
 3. **Use different storage location**:
@@ -262,7 +294,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 **Solutions**:
 1. **Verify exact file path**:
    ```
-   /storage/emulated/0/atak/tools/VNS/GH/california/
+   /storage/emulated/0/atak/tools/VNS/GH/delaware/
    ```
    - Must be exact path, case-sensitive
    - Use Android file explorer to verify
@@ -270,9 +302,9 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 2. **Check all required files are present**:
    ```bash
    # All these files must exist:
-   california.kml
-   california.poly  
-   california.timestamp
+   delaware.kml
+   delaware.poly  
+   delaware.timestamp
    timestamp
    edges
    geometry
@@ -293,7 +325,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 4. **Verify file sizes**:
    ```bash
    # Files should have reasonable sizes (not 0 bytes)
-   ls -la output/california/
+   ls -la output/delaware/
    ```
 
 #### Routing requests fail in VNS
@@ -305,7 +337,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
    - Newer versions are incompatible
 
 2. **Corrupted graph data**:
-   - Regenerate the state data
+   - Regenerate the region data
    - Verify output files are not truncated
 
 3. **Android storage permissions**:
@@ -320,7 +352,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 **Solutions**:
 1. **Use mirrors if available**:
    - Check Geofabrik website for mirror servers
-   - Consider using torrent downloads for large states
+   - Consider using torrent downloads for large regions
 
 2. **Download outside Docker first**:
    ```bash
@@ -339,32 +371,37 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 ### Enable Verbose Logging
 ```bash
 # Debug the entire process
-docker run --rm -v "$(pwd)/output:/app/output" \
-  vns-data-generator:1.0 bash -x ./generate-data.sh california 2>&1 | tee debug.log
+docker run --rm \
+  -v "$(pwd)/output:/app/output" \
+  -v "$(pwd)/cache:/app/cache" \
+  ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
+  bash -x ./generate-data.sh us/delaware 2>&1 | tee debug.log
 ```
 
 ### Inspect Docker Container
 ```bash
 # Run container interactively
-docker run --rm -it -v "$(pwd)/output:/app/output" \
-  vns-data-generator:1.0 bash
+docker run --rm -it \
+  -v "$(pwd)/output:/app/output" \
+  -v "$(pwd)/cache:/app/cache" \
+  ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest bash
 
 # Manual step-by-step execution
 cd /app
-./generate-data.sh california
+./generate-data.sh us/delaware
 ```
 
 ### Validate Generated Files
 ```bash
 # Check GraphHopper files
-file output/california/edges
-file output/california/nodes
+file output/delaware/edges
+file output/delaware/nodes
 
 # Verify ZIP integrity
-unzip -t output/california.zip
+unzip -t output/delaware.zip
 
 # Check file sizes
-du -sh output/california/*
+du -sh output/delaware/*
 ```
 
 ### Monitor Resource Usage
@@ -380,6 +417,21 @@ iotop
 
 ## Getting Help
 
+### Region Discovery
+The tool now includes a built-in region lister to help you find the correct region paths:
+
+```bash
+# List all available regions organized by continent
+./list-regions.sh
+
+# This will show you the exact commands to run for each region
+# Example output:
+#   📍 North America:
+#     Delaware                    → ./run.sh us/delaware
+#     California                  → ./run.sh us/california
+#     Germany                     → ./run.sh europe/germany
+```
+
 ### Log Collection
 When reporting issues, include:
 
@@ -393,13 +445,14 @@ When reporting issues, include:
 
 2. **Error Output**:
    ```bash
-   ./run.sh california 2>&1 | tee error.log
+   ./run.sh us/delaware 2>&1 | tee error.log
    ```
 
 3. **File Listing**:
    ```bash
    ls -la output/
-   ls -la output/california/ 2>/dev/null || echo "No california folder"
+   ls -la output/delaware/ 2>/dev/null || echo "No delaware folder"
+   ls -la cache/
    ```
 
 ### Support Channels
@@ -407,9 +460,10 @@ When reporting issues, include:
 - **ATAK Documentation**: For VNS-specific questions
 - **GraphHopper Documentation**: For routing engine issues
 - **Docker Documentation**: For container issues
+- **Region Discovery**: Use `./list-regions.sh` to see all available regions
 
 ### Creating Minimal Reproductions
-1. **Test with Delaware** (smallest state)
+1. **Test with Malta** (smallest region: `europe/malta`)
 2. **Include complete error output**  
 3. **Specify exact system configuration**
 4. **List any modifications made to scripts**

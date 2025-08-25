@@ -28,6 +28,13 @@ check_jq() {
     fi
 }
 
+# Format output with simple, reliable formatting
+format_output() {
+    while IFS=$'\t' read -r name command; do
+        printf "  %-30s %s\n" "$name" "$command"
+    done
+}
+
 # Main function
 main() {
     check_jq
@@ -66,7 +73,7 @@ main() {
             .features[] | 
             select(.properties.parent == $cont) | 
             .properties.name + "\t→ ./run.sh " + .properties.id
-        ' | sort | column -t -s $'\t'
+        ' | sort | format_output
         
         echo ""
     done
