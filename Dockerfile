@@ -8,25 +8,7 @@
 # on the user's machine.
 # ==============================================================================
 
-# Multi-stage build for better caching and faster builds
-FROM maven:3.8-openjdk-8-slim AS graphhopper-builder
-
-# Install git in the builder stage
-RUN apt-get update && apt-get install -y git --no-install-recommends && rm -rf /var/lib/apt/lists/*
-
-# Set working directory for GraphHopper build
-WORKDIR /build
-
-# Clone the specific 1.0 branch of the GraphHopper repository.
-# This is critical, as VNS is only compatible with this version.
-RUN git clone --depth 1 --branch 1.0 https://github.com/graphhopper/graphhopper.git
-
-# Build GraphHopper from source using Maven with optimizations
-# Use parallel builds and skip tests for faster compilation
-WORKDIR /build/graphhopper
-RUN mvn -T 1C -DskipTests=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true clean install
-
-# Final runtime stage - smaller image
+# Use OpenJDK 8 JRE for minimal footprint
 FROM openjdk:8-jre-slim
 
 # Set the working directory inside the container
@@ -45,8 +27,33 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy built GraphHopper from builder stage
-COPY --from=graphhopper-builder /build/graphhopper ./graphhopper
+# Download pre-built GraphHopper 1.0 JARs from Maven Central
+# This eliminates the need to compile from source, significantly reducing build time
+RUN mkdir -p graphhopper && \
+    wget -O graphhopper/graphhopper-web-1.0.jar \
+    "https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/1.0/graphhopper-web-1.0.jar" && \
+    wget -O graphhopper/graphhopper-core-1.0.jar \
+    "https://repo1.maven.org/maven2/com/graphhopper/graphhopper-core/1.0/graphhopper-core-1.0.jar"
+
+# Create minimal GraphHopper config file for import operations
+RUN echo 'graphhopper:\n\
+  datareader.file: ""\n\
+  graph.location: graph-cache\n\
+  graph.flag_encoders: car\n\
+\n\
+  profiles:\n\
+    - name: car\n\
+      vehicle: car\n\
+      weighting: fastest\n\
+\n\
+  profiles_ch:\n\
+    - profile: car\n\
+\n\
+server:\n\
+  type: simple\n\
+  connector:\n\
+    type: http\n\
+    port: 8989' > graphhopper/config-example.yml
 
 # Copy the scripts into the container's working directory
 COPY generate-data.sh .

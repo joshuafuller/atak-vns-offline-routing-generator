@@ -216,18 +216,16 @@ fi
 if [ "$NEED_PROCESSING" = "true" ]; then
     # --- GraphHopper Configuration ---
     echo "Step 2: Configuring GraphHopper memory allocation..."
-    # Modify the graphhopper.sh script to increase Java heap space.
-    # This is necessary for processing larger states and prevents memory errors.
-    # 'sed' is used to find and replace the memory setting line in the script.
-    sed -i 's/-Xmx1000m -Xms1000m/-Xmx4096m -Xms4096m/' ./graphhopper/graphhopper.sh
+    # Using pre-built JAR files, memory allocation is set directly in java command
+    # No need to modify shell scripts since we're using JAR files directly
     echo "Memory allocation set to 4GB."
 
     # --- Graph Generation ---
     echo "Step 3: Running GraphHopper import process..."
     echo "This is the longest step and can take a significant amount of time."
 
-    # Run GraphHopper from its directory
-    if ! (cd graphhopper && java -Xmx4096m -Xms4096m -Ddw.graphhopper.datareader.file="../${OSM_FILE}" -Ddw.graphhopper.graph.location="../${GRAPH_FOLDER}" -jar web/target/graphhopper-web-1.0-SNAPSHOT.jar import config-example.yml); then
+    # Run GraphHopper using pre-built JAR file
+    if ! (cd graphhopper && java -Xmx4096m -Xms4096m -Ddw.graphhopper.datareader.file="../${OSM_FILE}" -Ddw.graphhopper.graph.location="../${GRAPH_FOLDER}" -jar graphhopper-web-1.0.jar import config-example.yml); then
         echo "❌ Error: GraphHopper import failed"
         echo ""
         echo "🔧 Troubleshooting tips:"

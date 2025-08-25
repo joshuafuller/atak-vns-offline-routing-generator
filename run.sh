@@ -16,7 +16,7 @@
 # --- Configuration ---
 # Use pre-built image from GitHub Container Registry by default
 USE_PREBUILT=${USE_PREBUILT:-true}
-VERSION="1.1"
+VERSION="latest"
 REGISTRY_IMAGE="ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest"
 LOCAL_IMAGE_NAME="vns-data-generator"
 LOCAL_IMAGE_TAG="$VERSION"
