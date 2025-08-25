@@ -20,10 +20,39 @@
 
 ## Quick Start
 
-### 1. Get the Tool
+### 🚀 Try it instantly (no setup required)
+Want to test with Delaware routing data? Run this single command:
+
+```bash
+# Create output directories and generate Delaware routing data
+mkdir -p output cache && docker run --rm \
+  -v "$(pwd)/output:/app/output" \
+  -v "$(pwd)/cache:/app/cache" \
+  ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
+  ./generate-data.sh us/delaware
+```
+
+**That's it!** No git clone, no repository download. You'll get:
+- ✅ Delaware routing data in `./output/delaware/`
+- ✅ Ready-to-transfer ZIP at `./output/delaware.zip`
+- ✅ Cached data for future runs
+
+**For other regions:**
+```bash
+# Generate data for Germany (replace us/delaware with any region)
+docker run --rm \
+  -v "$(pwd)/output:/app/output" \
+  -v "$(pwd)/cache:/app/cache" \
+  ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
+  ./generate-data.sh europe/germany
+```
+
+### 🛠️ Full setup (recommended for regular use)
+
+#### 1. Get the Tool
 [Download ZIP](https://github.com/joshuafuller/atak-vns-offline-routing-generator/archive/refs/heads/main.zip) → Extract to a folder
 
-### 2. Generate Routing Data
+#### 2. Generate Routing Data
 ```bash
 # Make scripts executable (Mac/Linux only)
 chmod +x run.sh
