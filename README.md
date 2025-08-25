@@ -42,21 +42,22 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
 4. Generate routing data for any Geofabrik region:
    ```bash
    # Examples
-   ./run.sh north-america/us/california
-   ./run.sh europe/germany
-   ./run.sh asia/india
+   ./run.sh us/california
+   ./run.sh germany
+   ./run.sh india
    ```
 5. Need help finding a region path? List all available downloads:
    ```bash
-   ./list-regions.py
+   ./list-regions.sh
    ```
 
-### Processing Times (Approximate)
-| Region Size | Example | Time | Output Size |
-|-------------|---------|------|-------------|
-| Small | Delaware | ~30 seconds | ~10 MB |
-| Medium | Tennessee | ~3 minutes | ~80 MB |
-| Large | California | ~7 minutes | ~260 MB |
+### Processing Times (Tested)
+| Region Size | Example | Processing Time | Output Size |
+|-------------|---------|-----------------|-------------|
+| Small | Malta | ~10 seconds | ~2.6 MB |
+| Small | Delaware | ~17 seconds | ~9.1 MB |
+| Medium | Tennessee | ~3-5 minutes | ~80 MB |
+| Large | Texas/California | ~10+ minutes | ~260+ MB |
 
 ## 📱 Installing on Your Android Device
 
@@ -172,7 +173,7 @@ atak-vns-offline-routing-generator/
 - **Recommended**: 8GB+ RAM for large regions like California or Texas
 
 ### Listing Available Regions
-Run `./list-regions.py` to display the ~500 region paths published by Geofabrik. Use any of these paths with `run.sh` to generate data.
+Run `./list-regions.sh` to display the ~500 region paths published by Geofabrik. Use any of these paths with `run.sh` to generate data.
 
 ### Data Freshness:
 This tool generates routing data from the latest available OpenStreetMap data via Geofabrik (typically updated weekly). For real-time conditions like:

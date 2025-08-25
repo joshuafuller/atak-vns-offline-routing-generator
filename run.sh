@@ -9,7 +9,7 @@
 #
 # Usage:
 # ./run.sh <geofabrik-path>
-# e.g., ./run.sh north-america/us/california
+# e.g., ./run.sh us/delaware
 # e.g., ./run.sh europe/germany
 # ==============================================================================
 
@@ -23,16 +23,18 @@ IMAGE_TAG="1.0"
 if [ -z "$1" ]; then
     echo "Error: No region path provided."
     echo "Usage: ./run.sh <geofabrik-path>"
-    echo "Example: ./run.sh north-america/us/california"
+    echo "Example: ./run.sh us/delaware"
     exit 1
 fi
 
 REGION_PATH=$1
 REGION_NAME=$(basename "$REGION_PATH")
 
-# Create the output directory on the host machine if it doesn't exist
-# This is where the final data files will be placed.
+# Create the output and cache directories on the host machine if they don't exist
+# Output: where the final data files will be placed
+# Cache: where downloaded OSM data is cached for reuse
 mkdir -p ./output
+mkdir -p ./cache
 
 echo "--- VNS Offline Data Generator ---"
 
@@ -40,8 +42,7 @@ echo "--- VNS Offline Data Generator ---"
 if [[ "$(docker images -q ${IMAGE_NAME}:${IMAGE_TAG} 2> /dev/null)" == "" ]]; then
   echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' not found. Building it now..."
   echo "This may take several minutes, but it only needs to be done once."
-  docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-  if [ $? -ne 0 ]; then
+  if ! docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .; then
     echo "Error: Docker image build failed. Please check your Docker setup and Dockerfile."
     exit 1
   fi
@@ -58,15 +59,17 @@ echo "Please be patient..."
 # -v "$(pwd)/output:/app/output": This mounts the local './output' directory
 #   into the container at '/app/output'. Any files created in '/app/output'
 #   inside the container will appear in './output' on your local machine.
+# -v "$(pwd)/cache:/app/cache": This mounts the local './cache' directory
+#   into the container at '/app/cache' for persistent caching across runs.
 # --rm: This flag automatically removes the container when it exits, keeping
 #   your system clean.
-docker run --rm \
-    -v "$(pwd)/output:/app/output" \
-    ${IMAGE_NAME}:${IMAGE_TAG} \
-    bash -c "./generate-data.sh ${REGION_PATH}"
 
 # Check the exit code of the Docker command
-if [ $? -eq 0 ]; then
+if docker run --rm \
+    -v "$(pwd)/output:/app/output" \
+    -v "$(pwd)/cache:/app/cache" \
+    "${IMAGE_NAME}:${IMAGE_TAG}" \
+    bash -c "./generate-data.sh ${REGION_PATH}"; then
     echo "---"
     echo "✅ Data generation completed successfully!"
     echo ""
