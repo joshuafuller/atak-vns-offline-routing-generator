@@ -19,11 +19,13 @@ WORKDIR /app
 # - wget: To download map data from Geofabrik
 # - maven: To build the GraphHopper project from source
 # - zip: To create compressed archives for easy transfer
+# - jq: For JSON parsing and region URL extraction
 RUN apt-get update && apt-get install -y \
     git \
     wget \
     maven \
     zip \
+    jq \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 

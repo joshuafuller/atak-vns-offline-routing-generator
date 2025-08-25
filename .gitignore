@@ -1,30 +1,41 @@
-# Generated output data
-output/*/
-output/*.zip
-output/*.osm.pbf
-output/*.poly
-output/*.kml
+# Generated routing data
+output/
+cache/
+logs/
+
+# Build artifacts
+*.jar
+*.class
+target/
+
+# GraphHopper source (downloaded by Docker)
+graphhopper/
+
+# Future implementation - not committed
+go-src/
+
+# Development planning docs - not committed
+plan/
 
 # Temporary files
 *.tmp
-*.temp
+*.log
+validation_results.log
 
-# Docker build context
-.docker/
-
-# System files
+# OS files
 .DS_Store
 Thumbs.db
 
-# IDE files
+# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Log files
-*.log
+# Backup files
+*.bak
+*.backup
 
-# Environment files
-.env
-.env.local
+# Docker volumes
+.docker/

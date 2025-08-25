@@ -1,6 +1,6 @@
 # 🗺️ ATAK VNS Offline Routing Generator
 
-**Automated generation of VNS-compatible offline routing files for any U.S. state**
+**Automated generation of VNS-compatible offline routing files for any Geofabrik region**
 
 [![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -8,7 +8,7 @@
 
 ## 📋 Overview
 
-This tool automates the creation of VNS-compatible offline routing files for any U.S. state, transforming a complex multi-step manual process into a single command. 
+This tool automates the creation of VNS-compatible offline routing files for any region available on [Geofabrik](https://download.geofabrik.de/), transforming a complex multi-step manual process into a single command.
 
 The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper v1.0 routing data with precise file structures. This generator handles all the complexity:
 
@@ -39,38 +39,42 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
    ```bash
    chmod +x run.sh
    ```
-4. Generate routing data for any U.S. state:
+4. Generate routing data for any Geofabrik region:
    ```bash
    # Examples
-   ./run.sh california
-   ./run.sh texas
-   ./run.sh new-york
-   ./run.sh north-dakota
+   ./run.sh us/california
+   ./run.sh germany
+   ./run.sh india
+   ```
+5. Need help finding a region path? List all available downloads:
+   ```bash
+   ./list-regions.sh
    ```
 
-### Processing Times (Approximate)
-| State Size | Example | Time | Output Size |
-|------------|---------|------|-------------|
-| Small | Delaware | ~30 seconds | ~10 MB |
-| Medium | Tennessee | ~3 minutes | ~80 MB |
-| Large | California | ~7 minutes | ~260 MB |
+### Processing Times (Tested)
+| Region Size | Example | Processing Time | Output Size |
+|-------------|---------|-----------------|-------------|
+| Small | Malta | ~10 seconds | ~2.6 MB |
+| Small | Delaware | ~17 seconds | ~9.1 MB |
+| Medium | Tennessee | ~3-5 minutes | ~80 MB |
+| Large | Texas/California | ~10+ minutes | ~260+ MB |
 
 ## 📱 Installing on Your Android Device
 
 After generation completes, you'll have:
-- 📁 **Folder**: `./output/[state-name]/` - Raw routing data
-- 📦 **ZIP file**: `./output/[state-name].zip` - Compressed for transfer
+- 📁 **Folder**: `./output/[region-name]/` - Raw routing data
+- 📦 **ZIP file**: `./output/[region-name].zip` - Compressed for transfer
 
 ### Installation Steps:
 1. **Transfer** the ZIP file to your Android device
-2. **Extract** the ZIP to get the state folder
+2. **Extract** the ZIP to get the region folder
 3. **Copy** the entire folder to your device at:
    ```
-   /storage/emulated/0/atak/tools/VNS/GH/[state-name]/
+   /storage/emulated/0/atak/tools/VNS/GH/[region-name]/
    ```
    OR
    ```
-   Internal Storage/atak/tools/VNS/GH/[state-name]/
+   Internal Storage/atak/tools/VNS/GH/[region-name]/
    ```
 
 ### Required Folder Structure on Device:
@@ -81,7 +85,7 @@ Internal Storage/
         └── VNS/
             └── GH/
                 ├── california/      ← Your generated routing data
-                ├── texas/           ← Additional states
+                ├── texas/           ← Additional regions
                 └── florida/         ← VNS detects all folders here
 ```
 
@@ -126,10 +130,10 @@ This generator automates the "offline routing data" portion:
 
 ### Generated Files:
 ```
-[state-name]/
-├── [state-name].kml          ← KML boundary file
-├── [state-name].poly         ← POLY boundary file  
-├── [state-name].timestamp    ← State-named timestamp
+[region-name]/
+├── [region-name].kml          ← KML boundary file
+├── [region-name].poly         ← POLY boundary file
+├── [region-name].timestamp    ← Region-named timestamp
 ├── timestamp                 ← Generic timestamp
 ├── edges                     ← GraphHopper routing data
 ├── geometry                  ← Binary routing files
@@ -151,8 +155,8 @@ atak-vns-offline-routing-generator/
 ├── run.sh                 ← Main entry point script
 ├── generate-data.sh       ← Core data processing script
 └── output/                ← Generated routing data (created after first run)
-    ├── [state-name]/      ← VNS-ready folder
-    └── [state-name].zip   ← Compressed archive
+    ├── [region-name]/      ← VNS-ready folder
+    └── [region-name].zip   ← Compressed archive
 ```
 
 ## ⚙️ Technical Details
@@ -166,11 +170,10 @@ atak-vns-offline-routing-generator/
 
 ### Memory Requirements:
 - **Minimum**: 4GB RAM (configured automatically)
-- **Recommended**: 8GB+ RAM for large states like California or Texas
+- **Recommended**: 8GB+ RAM for large regions like California or Texas
 
-### Supported States:
-All 50 U.S. states plus DC. Use lowercase names with dashes for spaces:
-- `california`, `texas`, `florida`, `new-york`, `north-carolina`, etc.
+### Listing Available Regions
+Run `./list-regions.sh` to display the ~500 region paths published by Geofabrik. Use any of these paths with `run.sh` to generate data.
 
 ### Data Freshness:
 This tool generates routing data from the latest available OpenStreetMap data via Geofabrik (typically updated weekly). For real-time conditions like:
@@ -221,11 +224,11 @@ docker run --rm -v "$(pwd)/output:/app/output" \
     vns-data-generator:1.0 ./generate-data.sh california
 ```
 
-### Batch Processing Multiple States:
+### Batch Processing Multiple Regions:
 ```bash
-# Process multiple states
-for state in california texas florida; do
-    ./run.sh $state
+# Process multiple regions
+for region in north-america/us/california europe/germany; do
+    ./run.sh $region
 done
 ```
 
@@ -242,17 +245,17 @@ done
 - On Windows: Use PowerShell or Git Bash
 
 **"Out of memory errors"**
-- Large states need significant RAM
+- Large regions need significant RAM
 - Close other applications
-- Consider processing smaller states first
+- Consider processing smaller regions first
 
 **"Network timeouts"**
 - Check internet connection
 - Geofabrik servers may be busy - retry later
 
-**"VNS not detecting routing data"**
-- Ensure folder is copied to exact path: `/storage/emulated/0/atak/tools/VNS/GH/[state-name]/`
-- Check that all required files are present (see Generated Files section)
+ **"VNS not detecting routing data"**
+ - Ensure folder is copied to exact path: `/storage/emulated/0/atak/tools/VNS/GH/[region-name]/`
+ - Check that all required files are present (see Generated Files section)
 - Restart ATAK after copying new routing data
 
 ### Debug Mode:
@@ -273,7 +276,7 @@ Contributions welcome! Please feel free to submit issues and pull requests.
 ### Development Setup:
 1. Fork the repository
 2. Make your changes
-3. Test with a small state (Delaware recommended)
+3. Test with a small region (Delaware recommended)
 4. Submit a pull request
 
 ## 📞 Support
