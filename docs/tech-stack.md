@@ -1,5 +1,7 @@
 # Technology Stack
 
+**Current Version**: 1.1
+
 ## Core Technologies
 
 ### Container Runtime
@@ -12,7 +14,7 @@
 - **Bash** - Shell scripting
   - Primary automation language
   - Used for: Data pipeline orchestration, file management
-  - Scripts: `run.sh`, `generate-data.sh`
+  - Scripts: `run.sh`, `generate-data.sh`, `list-regions.sh`
 
 - **Java 8** - GraphHopper runtime
   - Required by GraphHopper v1.0
@@ -42,10 +44,10 @@
   - Format: Protocol Buffers Binary (`.osm.pbf`)
   - Source: Geofabrik extracts
   - Update Frequency: Weekly
-  - Coverage: Global, focus on US states
+  - Coverage: Global coverage via Geofabrik API
 
 - **Geofabrik** - OSM data distribution service
-  - Base URL: `http://download.geofabrik.de/north-america/us/`
+  - API: `https://download.geofabrik.de/index-v1-nogeom.json`
   - Files: `.osm.pbf`, `.poly`, `.kml`
   - Reliability: Industry standard for OSM data
 
@@ -54,7 +56,7 @@
 #### Input Formats
 - **PBF (Protocol Buffer Binary)** - Compressed OSM data
   - Extension: `.osm.pbf`
-  - Size: Highly compressed (California ~400MB)
+  - Size: Highly compressed (regions vary from 8MB to 4.3GB)
   - Content: Roads, POIs, geographic features
 
 - **POLY** - Polygon boundary definition
@@ -79,10 +81,20 @@
   - Flags: `-q --show-progress` for clean output
   - Timeout: Default network timeouts
 
+- **curl** - HTTP client for API requests
+  - Purpose: Fetch Geofabrik region index for discovery
+  - Used by: `list-regions.sh` for region enumeration
+  - Fallback: Used when wget is not available
+
 - **zip/unzip** - Archive compression
   - Purpose: Package routing data for device transfer
   - Algorithm: Standard ZIP compression
   - Benefits: Universal compatibility, good compression ratio
+
+- **jq** - JSON processor
+  - Purpose: Parse Geofabrik API responses
+  - Usage: Extract download URLs dynamically
+  - Benefits: Eliminates hardcoded URLs
 
 ### Operating System
 - **Debian Linux** (in container)
@@ -97,6 +109,12 @@
 Download → Process → Structure → Package → Export
 ```
 Each stage has clear inputs/outputs and error handling.
+
+### Discovery Pattern
+```
+API Query → Parse JSON → Organize by Continent → Display Commands
+```
+The region discovery system automatically fetches and organizes available regions.
 
 ### Container Pattern
 - Immutable infrastructure
@@ -122,7 +140,7 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     zip \
-    unzip
+    jq
 ```
 
 ### Build Dependencies
@@ -139,6 +157,7 @@ RUN apt-get update && apt-get install -y \
 - **Geofabrik Downloads**: HTTP-based, no authentication required
 - **GitHub**: Git repository access for GraphHopper source
 - **OpenStreetMap**: Underlying data source (via Geofabrik)
+- **GitHub Container Registry (GHCR)**: Pre-built Docker images
 
 ## Performance Stack
 
@@ -150,10 +169,10 @@ RUN apt-get update && apt-get install -y \
 ### Storage Requirements
 - **Temporary Space**: 2-3x final output size
 - **Docker Images**: ~500MB (cached layers)
-- **Output Storage**: Varies by state (10MB-300MB)
+- **Output Storage**: Varies by region (9MB-760MB zipped)
 
 ### Network Usage
-- **Download Bandwidth**: Depends on state size (15MB-500MB)
+- **Download Bandwidth**: Depends on region size (8MB-4.3GB)
 - **Upload Bandwidth**: None (offline processing)
 - **Latency**: Not critical (batch downloads)
 
@@ -183,28 +202,33 @@ RUN apt-get update && apt-get install -y \
 # Development setup
 git clone https://github.com/joshuafuller/atak-vns-offline-routing-generator
 cd atak-vns-offline-routing-generator
-chmod +x run.sh
+chmod +x run.sh list-regions.sh
 
-# Test with small state
-./run.sh delaware
+# List available regions
+./list-regions.sh
+
+# Test with small region
+./run.sh europe/malta
 ```
 
 ### Testing Approach
 - **Unit Tests**: None (primarily shell scripts)
-- **Integration Tests**: End-to-end state processing
+- **Integration Tests**: End-to-end region processing
 - **Validation**: File structure verification
 - **Manual Testing**: VNS plugin compatibility
+- **Dependencies**: Pure Bash/Java implementation (no Python required)
 
 ### Build Pipeline
 ```bash
 # Build process
-docker build -t vns-data-generator:1.0 .
+docker build -t ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest .
 
 # Execution
 docker run --rm \
     -v "$(pwd)/output:/app/output" \
-    vns-data-generator:1.0 \
-    ./generate-data.sh california
+    -v "$(pwd)/cache:/app/cache" \
+    ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
+    ./generate-data.sh us/delaware
 ```
 
 ## Monitoring and Logging
@@ -224,9 +248,9 @@ docker run --rm \
 ### Health Checks
 ```bash
 # Validate output
-ls -la output/[state-name]/
-du -sh output/[state-name].zip
-unzip -t output/[state-name].zip
+ls -la output/[region-name]/
+du -sh output/[region-name].zip
+unzip -t output/[region-name].zip
 ```
 
 ## Integration Points
@@ -243,7 +267,7 @@ unzip -t output/[state-name].zip
 
 ### CI/CD Potential
 - **GitHub Actions**: Automated testing
-- **Docker Registry**: Image distribution
+- **Docker Registry**: Image distribution (GHCR)
 - **Release Automation**: Tagged builds
 
 ## Extensibility Points
@@ -267,8 +291,8 @@ unzip -t output/[state-name].zip
 
 ### Minimum System Requirements
 - **CPU**: 2 cores, 2.0+ GHz
-- **RAM**: 4GB available
-- **Storage**: 5GB free space
+- **RAM**: 6GB available (4GB for container + overhead)
+- **Storage**: 10GB free space
 - **Network**: Broadband internet (for downloads)
 - **OS**: Windows 10+, macOS 10.15+, Linux (Docker support)
 
