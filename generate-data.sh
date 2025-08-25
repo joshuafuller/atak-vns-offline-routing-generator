@@ -13,26 +13,27 @@ set -e # Exit immediately if a command exits with a non-zero status.
 
 # --- Input Validation ---
 if [ -z "$1" ]; then
-    echo "Error: State name not provided to the script."
+    echo "Error: Region path not provided to the script."
+    echo "Expected format: continent/country/region (e.g., europe/germany)"
     exit 1
 fi
 
-STATE_NAME=$1
-FILENAME="${STATE_NAME}-latest"
+REGION_PATH=$1                       # Full geofabrik path such as north-america/us/california
+REGION_NAME=$(basename "$REGION_PATH")
+FILENAME="${REGION_NAME}-latest"
 OSM_FILE="${FILENAME}.osm.pbf"
-POLY_FILE="${STATE_NAME}.poly"  # POLY files don't have -latest suffix
-KML_FILE="${STATE_NAME}.kml"    # KML boundary file
-GRAPH_FOLDER="${STATE_NAME}"    # VNS expects folder named after state, not with -latest-gh suffix
+POLY_FILE="${REGION_NAME}.poly"     # POLY files don't have -latest suffix
+KML_FILE="${REGION_NAME}.kml"       # KML boundary file
+GRAPH_FOLDER="${REGION_NAME}"      # VNS expects folder named after region
 
 # --- Geofabrik URL Configuration ---
-# This is the standard URL format for US states.
-BASE_URL="http://download.geofabrik.de/north-america/us"
-OSM_URL="${BASE_URL}/${OSM_FILE}"
-POLY_URL="${BASE_URL}/${POLY_FILE}"
-KML_URL="${BASE_URL}/${KML_FILE}"
+BASE_URL="http://download.geofabrik.de/${REGION_PATH}"
+OSM_URL="${BASE_URL}-latest.osm.pbf"
+POLY_URL="${BASE_URL}.poly"
+KML_URL="${BASE_URL}.kml"
 
 # --- Data Download ---
-echo "Step 1: Downloading map data for '${STATE_NAME}'..."
+echo "Step 1: Downloading map data for '${REGION_PATH}'..."
 echo "Downloading PBF from: ${OSM_URL}"
 if ! wget -q --show-progress -O ${OSM_FILE} ${OSM_URL}; then
     echo "Error: Failed to download OSM file"
@@ -94,7 +95,7 @@ fi
 
 # Create both timestamp files required by VNS (matching the structure you found)
 echo ${TIMESTAMP} > ./${GRAPH_FOLDER}/timestamp
-echo ${TIMESTAMP} > ./${GRAPH_FOLDER}/${STATE_NAME}.timestamp
+echo ${TIMESTAMP} > ./${GRAPH_FOLDER}/${REGION_NAME}.timestamp
 echo "Timestamp files created with value: ${TIMESTAMP}"
 
 # --- Finalizing Output ---
@@ -113,7 +114,7 @@ rm ${OSM_FILE}
 
 echo "Process finished."
 echo ""
-echo "🎉 VNS offline routing data successfully generated for ${STATE_NAME}!"
+echo "🎉 VNS offline routing data successfully generated for ${REGION_NAME}!"
 echo ""
 echo "Generated files:"
 echo "  📁 Folder: ./output/${GRAPH_FOLDER}/"
@@ -136,9 +137,9 @@ echo "   └── tools/"
 echo "       └── VNS/"
 echo "           └── GH/"
 echo "               └── ${GRAPH_FOLDER}/"
-echo "                   ├── ${STATE_NAME}.kml"
-echo "                   ├── ${STATE_NAME}.poly"
-echo "                   ├── ${STATE_NAME}.timestamp"
+echo "                   ├── ${REGION_NAME}.kml"
+echo "                   ├── ${REGION_NAME}.poly"
+echo "                   ├── ${REGION_NAME}.timestamp"
 echo "                   ├── timestamp"
 echo "                   ├── edges"
 echo "                   ├── geometry"

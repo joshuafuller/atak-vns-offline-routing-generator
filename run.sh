@@ -8,9 +8,9 @@
 # Docker image and running the data generation process within a container.
 #
 # Usage:
-# ./run.sh <state-name>
-# e.g., ./run.sh california
-# e.g., ./run.sh new-york
+# ./run.sh <geofabrik-path>
+# e.g., ./run.sh north-america/us/california
+# e.g., ./run.sh europe/germany
 # ==============================================================================
 
 # --- Configuration ---
@@ -19,15 +19,16 @@ IMAGE_TAG="1.0"
 
 # --- Script Logic ---
 
-# Check if a state name was provided as an argument
+# Check if a region path was provided as an argument
 if [ -z "$1" ]; then
-    echo "Error: No state name provided."
-    echo "Usage: ./run.sh <state-name>"
-    echo "Example: ./run.sh florida"
+    echo "Error: No region path provided."
+    echo "Usage: ./run.sh <geofabrik-path>"
+    echo "Example: ./run.sh north-america/us/california"
     exit 1
 fi
 
-STATE_NAME=$1
+REGION_PATH=$1
+REGION_NAME=$(basename "$REGION_PATH")
 
 # Create the output directory on the host machine if it doesn't exist
 # This is where the final data files will be placed.
@@ -49,8 +50,8 @@ else
   echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' found."
 fi
 
-echo "Starting data generation for: ${STATE_NAME}"
-echo "The process can take a very long time depending on the state's size."
+echo "Starting data generation for: ${REGION_PATH}"
+echo "The process can take a very long time depending on the region's size."
 echo "Please be patient..."
 
 # Run the data generation script inside a Docker container
@@ -62,7 +63,7 @@ echo "Please be patient..."
 docker run --rm \
     -v "$(pwd)/output:/app/output" \
     ${IMAGE_NAME}:${IMAGE_TAG} \
-    bash -c "./generate-data.sh ${STATE_NAME}"
+    bash -c "./generate-data.sh ${REGION_PATH}"
 
 # Check the exit code of the Docker command
 if [ $? -eq 0 ]; then
@@ -79,14 +80,14 @@ if [ $? -eq 0 ]; then
     echo "    └── tools/"
     echo "        └── VNS/"
     echo "            └── GH/"
-    echo "                ├── ${STATE_NAME}/          ← Your new routing data"
-    echo "                │   ├── ${STATE_NAME}.kml"
-    echo "                │   ├── ${STATE_NAME}.poly"
+    echo "                ├── ${REGION_NAME}/          ← Your new routing data"
+    echo "                │   ├── ${REGION_NAME}.kml"
+    echo "                │   ├── ${REGION_NAME}.poly"
     echo "                │   ├── edges"
     echo "                │   ├── geometry"
     echo "                │   ├── nodes"
     echo "                │   └── ... (other files)"
-    echo "                ├── florida/        ← Example: Other states you might have"
+    echo "                ├── florida/        ← Example: Other data you might have"
     echo "                └── california/     ← Example: Additional routing data"
     echo ""
     echo "🔧 VNS will automatically detect all folders in the GH directory!"
