@@ -8,34 +8,45 @@
 # on the user's machine.
 # ==============================================================================
 
-# Start from a base image that includes OpenJDK (Java Development Kit)
-FROM openjdk:8-jdk-slim
+# Multi-stage build for better caching and faster builds
+FROM maven:3.8-openjdk-8-slim AS graphhopper-builder
 
-# Set the working directory inside the container
-WORKDIR /app
+# Install git in the builder stage
+RUN apt-get update && apt-get install -y git --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Install necessary system packages
-# - git: To clone the GraphHopper repository
-# - wget: To download map data from Geofabrik
-# - maven: To build the GraphHopper project from source
-# - zip: To create compressed archives for easy transfer
-# - jq: For JSON parsing and region URL extraction
-RUN apt-get update && apt-get install -y \
-    git \
-    wget \
-    maven \
-    zip \
-    jq \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+# Set working directory for GraphHopper build
+WORKDIR /build
 
 # Clone the specific 1.0 branch of the GraphHopper repository.
 # This is critical, as VNS is only compatible with this version.
 RUN git clone --depth 1 --branch 1.0 https://github.com/graphhopper/graphhopper.git
 
-# Build GraphHopper from source using Maven.
-# The build process downloads dependencies and compiles the Java code.
-RUN cd graphhopper && mvn -DskipTests=true clean install
+# Build GraphHopper from source using Maven with optimizations
+# Use parallel builds and skip tests for faster compilation
+WORKDIR /build/graphhopper
+RUN mvn -T 1C -DskipTests=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true clean install
+
+# Final runtime stage - smaller image
+FROM openjdk:8-jre-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Install only runtime dependencies (no maven needed in final image)
+# - git: To clone repositories if needed
+# - wget: To download map data from Geofabrik  
+# - zip: To create compressed archives for easy transfer
+# - jq: For JSON parsing and region URL extraction
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    zip \
+    jq \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy built GraphHopper from builder stage
+COPY --from=graphhopper-builder /build/graphhopper ./graphhopper
 
 # Copy the scripts into the container's working directory
 COPY generate-data.sh .
