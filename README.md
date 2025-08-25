@@ -76,6 +76,9 @@ chmod +x run.sh
 **Keeping up to date?**
 - [Updating Guide](docs/updating.md) - How to get the latest version
 
+**Contributing?**
+- [Versioning Guide](VERSIONING.md) - Commit message format for automatic releases
+
 ## Support
 
 **For this data generator tool:**

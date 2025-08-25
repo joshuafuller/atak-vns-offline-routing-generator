@@ -37,11 +37,12 @@ RUN git clone --depth 1 --branch 1.0 https://github.com/graphhopper/graphhopper.
 # The build process downloads dependencies and compiles the Java code.
 RUN cd graphhopper && mvn -DskipTests=true clean install
 
-# Copy the data generation script into the container's working directory
+# Copy the scripts into the container's working directory
 COPY generate-data.sh .
+COPY list-regions.sh .
 
-# Make the script executable
-RUN chmod +x generate-data.sh
+# Make the scripts executable
+RUN chmod +x generate-data.sh list-regions.sh
 
 # Set the default command to execute when the container starts.
 # This allows the run.sh script to pass the state name directly.
