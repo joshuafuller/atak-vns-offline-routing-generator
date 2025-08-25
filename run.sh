@@ -15,7 +15,7 @@
 
 # --- Configuration ---
 IMAGE_NAME="vns-data-generator"
-IMAGE_TAG="1.0"
+IMAGE_TAG="1.1"
 
 # --- Script Logic ---
 
