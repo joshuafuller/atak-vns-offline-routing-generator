@@ -31,8 +31,10 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
 
 ### Prerequisites
 - **Docker** installed and running on your system ([Download Docker](https://www.docker.com/get-started))
+- **Internet connection** for downloading maps and Docker images
 
 ### Usage
+> **✨ Zero setup required!** The script automatically downloads a pre-built Docker image on first run.
 1. Clone or download this repository
 2. Open a terminal in the project directory
 3. Make scripts executable (macOS/Linux only):
@@ -60,6 +62,18 @@ The VNS (Visual Navigation System) plugin for ATAK requires specific GraphHopper
 | Medium | Great Britain | ~5-8 minutes | 381 MB |
 | Large | Germany | ~10+ minutes | 760 MB |
 | Large | Ukraine | ~10+ minutes | 232 MB |
+
+## 🐳 Docker Image Options
+
+**Default (Recommended)**: Uses pre-built images from GitHub Container Registry
+- ✅ **Faster startup** - No build time required  
+- ✅ **Always up-to-date** - Automatically pulls versioned images (v1.1)
+- ✅ **No dependencies** - No need for build tools locally
+
+**Local Build**: Force local Docker build if needed
+```bash
+USE_PREBUILT=false ./run.sh great-britain
+```
 
 ## 📱 Installing on Your Android Device
 

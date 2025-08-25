@@ -14,8 +14,12 @@
 # ==============================================================================
 
 # --- Configuration ---
-IMAGE_NAME="vns-data-generator"
-IMAGE_TAG="1.1"
+# Use pre-built image from GitHub Container Registry by default
+USE_PREBUILT=${USE_PREBUILT:-true}
+VERSION="1.1"
+REGISTRY_IMAGE="ghcr.io/joshuafuller/atak-vns-offline-routing-generator:${VERSION}"
+LOCAL_IMAGE_NAME="vns-data-generator"
+LOCAL_IMAGE_TAG="$VERSION"
 
 # --- Script Logic ---
 
@@ -38,17 +42,34 @@ mkdir -p ./cache
 
 echo "--- VNS Offline Data Generator ---"
 
-# Check if the Docker image already exists
-if [[ "$(docker images -q ${IMAGE_NAME}:${IMAGE_TAG} 2> /dev/null)" == "" ]]; then
-  echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' not found. Building it now..."
-  echo "This may take several minutes, but it only needs to be done once."
-  if ! docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .; then
-    echo "Error: Docker image build failed. Please check your Docker setup and Dockerfile."
-    exit 1
+# Determine which Docker image to use
+if [ "$USE_PREBUILT" = "true" ]; then
+  DOCKER_IMAGE="$REGISTRY_IMAGE"
+  echo "Using pre-built Docker image: $DOCKER_IMAGE"
+  
+  # Try to pull the latest image
+  echo "Pulling latest image (this may take a moment on first run)..."
+  if ! docker pull "$DOCKER_IMAGE" 2>/dev/null; then
+    echo "Warning: Failed to pull pre-built image. Falling back to local build..."
+    USE_PREBUILT=false
   fi
-  echo "Docker image built successfully."
-else
-  echo "Docker image '${IMAGE_NAME}:${IMAGE_TAG}' found."
+fi
+
+if [ "$USE_PREBUILT" != "true" ]; then
+  DOCKER_IMAGE="${LOCAL_IMAGE_NAME}:${LOCAL_IMAGE_TAG}"
+  
+  # Check if the local Docker image exists
+  if [[ "$(docker images -q ${LOCAL_IMAGE_NAME}:${LOCAL_IMAGE_TAG} 2> /dev/null)" == "" ]]; then
+    echo "Docker image '${LOCAL_IMAGE_NAME}:${LOCAL_IMAGE_TAG}' not found. Building it now..."
+    echo "This may take several minutes, but it only needs to be done once."
+    if ! docker build -t "${LOCAL_IMAGE_NAME}:${LOCAL_IMAGE_TAG}" .; then
+      echo "Error: Docker image build failed. Please check your Docker setup and Dockerfile."
+      exit 1
+    fi
+    echo "Docker image built successfully."
+  else
+    echo "Using local Docker image: ${LOCAL_IMAGE_NAME}:${LOCAL_IMAGE_TAG}"
+  fi
 fi
 
 echo "Starting data generation for: ${REGION_PATH}"
@@ -68,7 +89,7 @@ echo "Please be patient..."
 if docker run --rm \
     -v "$(pwd)/output:/app/output" \
     -v "$(pwd)/cache:/app/cache" \
-    "${IMAGE_NAME}:${IMAGE_TAG}" \
+    "$DOCKER_IMAGE" \
     bash -c "./generate-data.sh ${REGION_PATH}"; then
     echo "---"
     echo "✅ Data generation completed successfully!"
