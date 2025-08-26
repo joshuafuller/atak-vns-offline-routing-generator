@@ -30,7 +30,7 @@ check_jq() {
 
 # Format output with simple, reliable formatting
 format_output() {
-    while IFS=$'\t' read -r name command; do
+    while IFS='	' read -r name command; do
         printf "  %-30s %s\n" "$name" "$command"
     done
 }
