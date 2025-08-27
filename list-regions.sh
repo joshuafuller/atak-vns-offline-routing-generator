@@ -45,8 +45,20 @@ main() {
     echo ""
     
     local json_data
-    if ! json_data=$(curl -s "$INDEX_URL" 2>/dev/null); then
-        echo "❌ Error: Failed to fetch region data from Geofabrik API"
+    local retry_count=0
+    local max_retries=10
+    
+    while [ $retry_count -lt $max_retries ]; do
+        if json_data=$(curl -s "$INDEX_URL" 2>/dev/null) && [ -n "$json_data" ]; then
+            break
+        fi
+        retry_count=$((retry_count + 1))
+        echo "⚠️  Retry $retry_count/$max_retries - Failed to fetch region data from Geofabrik API"
+        sleep 2
+    done
+    
+    if [ $retry_count -eq $max_retries ]; then
+        echo "❌ Error: Failed to fetch region data from Geofabrik API after $max_retries attempts"
         echo "Please check your internet connection and try again."
         exit 1
     fi
