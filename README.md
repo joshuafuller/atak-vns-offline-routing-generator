@@ -2,7 +2,10 @@
 
 **Creates backup navigation files for ATAK's VNS plugin - works without cell service**
 
-[![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
+[![Docker Pulls](https://img.shields.io/github/actions/workflow/status/joshuafuller/atak-vns-offline-routing-generator/build-and-publish.yml?style=flat-square&logo=docker&label=Docker%20Build)](https://github.com/joshuafuller/atak-vns-offline-routing-generator/pkgs/container/atak-vns-offline-routing-generator)
+[![GitHub Release](https://img.shields.io/github/v/release/joshuafuller/atak-vns-offline-routing-generator?style=flat-square&logo=github)](https://github.com/joshuafuller/atak-vns-offline-routing-generator/releases/latest)
+[![GitHub Downloads](https://img.shields.io/github/downloads/joshuafuller/atak-vns-offline-routing-generator/total?style=flat-square&logo=github)](https://github.com/joshuafuller/atak-vns-offline-routing-generator/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/joshuafuller/atak-vns-offline-routing-generator?style=flat-square&logo=github)](https://github.com/joshuafuller/atak-vns-offline-routing-generator/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![ATAK](https://img.shields.io/badge/ATAK-VNS%20Plugin-orange?style=flat-square)](https://tak.gov/plugins/vns)
 
