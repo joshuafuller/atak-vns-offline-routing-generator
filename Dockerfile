@@ -11,6 +11,15 @@
 # Use OpenJDK 8 JRE for minimal footprint
 FROM openjdk:8-jre-slim
 
+# Container metadata labels
+LABEL org.opencontainers.image.title="ATAK VNS Offline Routing Generator"
+LABEL org.opencontainers.image.description="Automated generation of VNS-compatible offline routing files for ATAK. Creates GraphHopper routing data from OpenStreetMap data for use in disconnected environments."
+LABEL org.opencontainers.image.vendor="ATAK Community"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.url="https://github.com/joshuafuller/atak-vns-offline-routing-generator"
+LABEL org.opencontainers.image.source="https://github.com/joshuafuller/atak-vns-offline-routing-generator"
+LABEL org.opencontainers.image.documentation="https://github.com/joshuafuller/atak-vns-offline-routing-generator/blob/main/README.md"
+
 # Set the working directory inside the container
 WORKDIR /app
 
