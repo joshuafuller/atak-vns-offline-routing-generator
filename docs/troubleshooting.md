@@ -152,27 +152,43 @@
 Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 ```
 
-**Solutions**:
-1. **Increase available system RAM**:
-   - Close other applications
-   - Ensure 8GB+ total system RAM for large regions
+**The tool now predicts memory needs and warns you beforehand, but if you still get this error:**
 
-2. **Modify memory allocation**:
+**Solutions**:
+1. **Use manual memory override**:
    ```bash
-   # Edit generate-data.sh and increase heap size
-   sed -i 's/-Xmx4096m -Xms4096m/-Xmx6144m -Xms6144m/' generate-data.sh
+   # Set specific memory allocation (example: 16GB)
+   VNS_MEMORY_GB=16 ./run.sh us/california
+   
+   # For very large regions like US-South
+   VNS_MEMORY_GB=20 ./run.sh us-south
    ```
 
-3. **Process smaller regions first**:
-   - Test with Malta (~9MB output)
-   - Gradually work up to larger regions
-
-4. **Monitor system resources**:
+2. **Check system memory availability**:
    ```bash
-   # Check available memory
+   # Check total system RAM
    free -h
-   # Monitor Docker container usage
-   docker stats
+   
+   # The tool needs significant RAM for large regions:
+   # - Small (Delaware): 1-2GB
+   # - Medium (Great Britain): 4-6GB  
+   # - Large (Germany): 8-12GB
+   # - Very Large (US-South): 16-20GB+
+   ```
+
+3. **Process smaller regions instead**:
+   ```bash
+   # Instead of processing us-south (requires 16GB+)
+   ./run.sh us/florida
+   ./run.sh us/georgia  
+   ./run.sh us/alabama
+   # Process individual states that need 2-6GB each
+   ```
+
+4. **Enable verbose logging for debugging**:
+   ```bash
+   VERBOSE_LOG=true ./run.sh us/delaware
+   # Check logs/ folder for detailed memory analysis
    ```
 
 #### Docker container killed due to memory
@@ -180,12 +196,29 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 
 **Solutions**:
 1. **Increase Docker memory limit** (Docker Desktop):
-   - Settings → Resources → Memory → Increase limit to 8GB+
+   - Settings → Resources → Memory → Increase to match region needs
+   - Small regions: 4GB Docker limit
+   - Large regions: 16GB+ Docker limit
 
-2. **Use swap space** (Linux):
+2. **The tool now warns you about insufficient memory before starting**:
+   ```bash
+   # Tool output example:
+   ❌ INSUFFICIENT MEMORY WARNING!
+   • Need: 16GB
+   • Have: 8GB total
+   • This WILL fail with out-of-memory errors
+   ```
+
+3. **Use manual memory override for testing**:
+   ```bash
+   # Force lower memory usage (may fail, but worth trying)
+   VNS_MEMORY_GB=6 ./run.sh us/california
+   ```
+
+4. **Use swap space** (Linux - helps but slower):
    ```bash
    sudo swapon --show  # Check current swap
-   sudo fallocate -l 4G /swapfile  # Create swap if needed
+   sudo fallocate -l 8G /swapfile  # Create large swap
    sudo chmod 600 /swapfile
    sudo mkswap /swapfile
    sudo swapon /swapfile
@@ -366,16 +399,54 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
    wget -c http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
    ```
 
+### Logging and Debugging
+
+#### New Comprehensive Logging System
+**The tool now automatically logs detailed information for debugging:**
+
+**Automatic Logging:**
+```bash
+# Every run creates a detailed log
+./run.sh us/delaware
+
+# Check the logs
+ls -la logs/
+# Shows: vns-generation-20250827_071113.log
+```
+
+**Verbose Logging** (for detailed system info):
+```bash
+VERBOSE_LOG=true ./run.sh us/delaware
+# Includes detailed system metrics, memory analysis, benchmark results
+```
+
+**What's in the logs:**
+- Memory predictions vs actual usage
+- Processing time predictions vs actual time
+- System benchmark results
+- Hardware compatibility analysis
+- Error details for issue reporting
+
+**Share logs when reporting issues** - they contain all the technical details needed for troubleshooting.
+
 ## Advanced Debugging
 
 ### Enable Verbose Logging
 ```bash
-# Debug the entire process
+# Use the built-in verbose logging system
+VERBOSE_LOG=true ./run.sh us/delaware
+
+# For Docker direct usage
 docker run --rm \
   -v "$(pwd)/output:/app/output" \
   -v "$(pwd)/cache:/app/cache" \
+  -v "$(pwd)/logs:/app/logs" \
+  -e VERBOSE_LOG=true \
   ghcr.io/joshuafuller/atak-vns-offline-routing-generator:latest \
-  bash -x ./generate-data.sh us/delaware 2>&1 | tee debug.log
+  ./generate-data.sh us/delaware
+
+# Check logs after completion
+cat logs/vns-generation-*.log
 ```
 
 ### Inspect Docker Container
@@ -433,9 +504,26 @@ The tool now includes a built-in region lister to help you find the correct regi
 ```
 
 ### Log Collection
-When reporting issues, include:
+When reporting issues, the new logging system makes this much easier:
 
-1. **System Information**:
+1. **Automatic Log Files** (most important):
+   ```bash
+   # Logs are automatically created in logs/ folder
+   ls -la logs/
+   
+   # Share the relevant log file when reporting issues
+   cat logs/vns-generation-20250827_071113.log
+   ```
+
+2. **For Verbose Details**:
+   ```bash
+   # Run with verbose logging to get detailed system info
+   VERBOSE_LOG=true ./run.sh us/delaware
+   
+   # Then share the verbose log file
+   ```
+
+3. **System Information** (if needed):
    ```bash
    uname -a
    docker --version
@@ -443,12 +531,7 @@ When reporting issues, include:
    df -h
    ```
 
-2. **Error Output**:
-   ```bash
-   ./run.sh us/delaware 2>&1 | tee error.log
-   ```
-
-3. **File Listing**:
+4. **File Listing**:
    ```bash
    ls -la output/
    ls -la output/delaware/ 2>/dev/null || echo "No delaware folder"

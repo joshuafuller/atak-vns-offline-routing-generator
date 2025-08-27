@@ -75,12 +75,31 @@ chmod +x run.sh
 
 ## Processing Times
 
-| Region Size | Example | Processing Time | Output Size |
-|-------------|---------|-----------------|-------------|
-| Small | Malta | ~10 seconds | 2.6 MB |
-| Small | Delaware | ~17 seconds | 9.1 MB |
-| Medium | Great Britain | ~5-8 minutes | 381 MB |
-| Large | Germany | ~10+ minutes | 760 MB |
+| Region Size | Example | Processing Time* | Memory Needed | Output Size |
+|-------------|---------|------------------|---------------|-------------|
+| Small | Malta | ~10 seconds | 1GB | 2.6 MB |
+| Small | Delaware | ~15-30 seconds | 1GB | 9.1 MB |
+| Medium | Great Britain | ~3-10 minutes | 6GB | 381 MB |
+| Large | Germany | ~8-15 minutes | 8GB | 760 MB |
+| Very Large | US-South | ~15-30 minutes | 16GB | 2.1 GB |
+
+***Processing times vary significantly based on your hardware.** The tool automatically benchmarks your system and provides accurate time estimates before starting.
+
+## Memory Requirements
+
+**Large regions require significant RAM.** The tool now predicts memory needs and warns you beforehand:
+
+- **Small regions** (Delaware, Malta): 1-2GB RAM sufficient
+- **Medium regions** (Great Britain): 4-6GB RAM needed  
+- **Large regions** (Germany, California): 8-12GB RAM needed
+- **Very large regions** (US-South, Texas): 16-20GB+ RAM needed
+
+**Manual Memory Override** (if automatic detection doesn't work):
+```bash
+VNS_MEMORY_GB=16 ./run.sh us/california
+```
+
+**Out of Memory?** See [Troubleshooting Guide](docs/troubleshooting.md#memory-issues) for solutions including processing smaller regions instead.
 
 ## Important Disclaimers
 
