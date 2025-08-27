@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.3.0...v1.3.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* separate Release Please from Docker builds for proper semver tagging ([2572319](https://github.com/joshuafuller/atak-vns-offline-routing-generator/commit/25723197cb9900acceb1b75d30a783811b71149d))
+
 ## [1.3.0](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.2.0...v1.3.0) (2025-08-27)
 
 
