@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.3.1...v1.3.2) (2025-08-27)
+
+
+### Bug Fixes
+
+* add container metadata labels for Docker registry descriptions ([c28fa52](https://github.com/joshuafuller/atak-vns-offline-routing-generator/commit/c28fa52e9669c6cb3e26864660e90cbf4bc97736))
+
 ## [1.3.1](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.3.0...v1.3.1) (2025-08-27)
 
 
