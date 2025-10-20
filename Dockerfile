@@ -9,7 +9,7 @@
 # ==============================================================================
 
 # Use OpenJDK 8 JRE for minimal footprint
-FROM openjdk:11-jre-slim
+FROM openjdk:11.0.16-jre-slim
 
 # Container metadata labels
 LABEL org.opencontainers.image.title="ATAK VNS Offline Routing Generator"
