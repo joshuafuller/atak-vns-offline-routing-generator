@@ -54,7 +54,7 @@ jobs:
           org.opencontainers.image.source=https://github.com/joshuafuller/atak-vns-offline-routing-generator
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v7
