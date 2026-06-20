@@ -35,6 +35,27 @@ format_output() {
     done
 }
 
+# Portable DNS resolution check. getent is Linux-only (absent on macOS and some
+# minimal images), so fall back through host/nslookup/python3 before giving up.
+dns_check_host() {
+    local host="$1"
+    if command -v getent >/dev/null 2>&1; then
+        getent hosts "$host" >/dev/null 2>&1 && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    elif command -v host >/dev/null 2>&1; then
+        host "$host" >/dev/null 2>&1 && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    elif command -v nslookup >/dev/null 2>&1; then
+        nslookup "$host" >/dev/null 2>&1 && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import socket,sys; socket.gethostbyname(sys.argv[1])" "$host" >/dev/null 2>&1 \
+            && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    fi
+    echo "could not check (no getent/host/nslookup/python3 available)"
+}
+
 # Main function
 main() {
     check_jq
@@ -47,8 +68,15 @@ main() {
     local json_data
     local retry_count=0
     local max_retries=10
-    local err_file
-    err_file=$(mktemp)
+    # NOTE: err_file is intentionally NOT 'local' — the EXIT trap below fires
+    # after main() returns, by which point a local would be out of scope and
+    # the temp file would leak on every successful run.
+    if ! err_file=$(mktemp 2>/dev/null) || [ -z "$err_file" ]; then
+        err_file="/tmp/vns-fetch-err.$$"
+        : > "$err_file" 2>/dev/null || err_file="/dev/null"
+    fi
+    # Clean the temp file up even if the user hits Ctrl-C mid-fetch.
+    [ "$err_file" != "/dev/null" ] && trap 'rm -f "$err_file"' EXIT
 
     while [ $retry_count -lt $max_retries ]; do
         # Try a normal (dual-stack) request first; on failure, retry forcing
@@ -69,12 +97,16 @@ main() {
         echo "❌ Error: Failed to fetch region data from Geofabrik API after $max_retries attempts"
         echo ""
         echo "----- Actual error reported by curl -----"
-        tail -n 5 "$err_file" 2>/dev/null | sort -u || echo "(no error output captured)"
+        if [ -s "$err_file" ]; then
+            tail -n 5 "$err_file"
+        else
+            echo "(no error output captured)"
+        fi
         echo "-----------------------------------------"
         echo ""
         echo "🔍 Quick diagnostics:"
         printf "   • DNS for download.geofabrik.de: "
-        if getent hosts download.geofabrik.de >/dev/null 2>&1; then echo "resolves OK"; else echo "RESOLUTION FAILED"; fi
+        dns_check_host download.geofabrik.de
         echo "   • For the full handshake, run:"
         echo "       curl -v https://download.geofabrik.de/index-v1-nogeom.json"
         echo ""
@@ -82,10 +114,8 @@ main() {
         echo "     - a TLS-intercepting proxy/AV whose CA curl does not trust"
         echo "     - a DNS resolver that cannot reach Geofabrik"
         echo "     - broken IPv6, or an IP/geo block on Geofabrik's side"
-        rm -f "$err_file"
         exit 1
     fi
-    rm -f "$err_file"
     
     local total_count
     total_count=$(echo "$json_data" | jq '.features | length')
