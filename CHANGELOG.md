@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.3.2...v1.3.3) (2026-06-20)
+
+
+### Bug Fixes
+
+* **fetch:** make failure diagnostics actually print (follow-up to [#28](https://github.com/joshuafuller/atak-vns-offline-routing-generator/issues/28)) ([#30](https://github.com/joshuafuller/atak-vns-offline-routing-generator/issues/30)) ([e1e6801](https://github.com/joshuafuller/atak-vns-offline-routing-generator/commit/e1e6801d3ba5dc2b3a70d10585d31584c31d3ab1))
+* **fetch:** surface real curl/wget errors + IPv4 fallback on Geofabrik fetch failure ([#28](https://github.com/joshuafuller/atak-vns-offline-routing-generator/issues/28)) ([14595d2](https://github.com/joshuafuller/atak-vns-offline-routing-generator/commit/14595d23d0862710858c6a3374d897ed9348d426)), closes [#26](https://github.com/joshuafuller/atak-vns-offline-routing-generator/issues/26)
+
 ## [1.3.2](https://github.com/joshuafuller/atak-vns-offline-routing-generator/compare/v1.3.1...v1.3.2) (2025-08-27)
 
 
