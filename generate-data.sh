@@ -149,16 +149,37 @@ echo "Fetching region URLs from Geofabrik API..."
 GEOFABRIK_INDEX_URL="https://download.geofabrik.de/index-v1-nogeom.json"
 retry_count=0
 max_retries=10
-WGET_ERR=$(mktemp)
+if ! WGET_ERR=$(mktemp 2>/dev/null) || [ -z "$WGET_ERR" ]; then
+    WGET_ERR="/tmp/vns-wget-err.$$"
+    : > "$WGET_ERR" 2>/dev/null || WGET_ERR="/dev/null"
+fi
+# Remove the temp file on any exit (including Ctrl-C), not just the happy path.
+[ "$WGET_ERR" != "/dev/null" ] && trap 'rm -f "$WGET_ERR"' EXIT
+
+# Portable DNS resolution check; getent may be absent from minimal images.
+dns_check_host() {
+    local host="$1"
+    if command -v getent >/dev/null 2>&1; then
+        getent hosts "$host" >/dev/null 2>&1 && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    elif command -v nslookup >/dev/null 2>&1; then
+        nslookup "$host" >/dev/null 2>&1 && { echo "resolves OK"; return; }
+        echo "RESOLUTION FAILED"; return
+    fi
+    echo "could not check (no getent/nslookup available)"
+}
 
 while [ $retry_count -lt $max_retries ]; do
     # Try a normal (dual-stack) request first; on failure, retry forcing IPv4
     # (-4) for hosts/containers where IPv6 is present but broken. Real errors
     # are captured to $WGET_ERR so we can surface them if all attempts fail.
-    if API_RESPONSE=$(wget -qO- "$GEOFABRIK_INDEX_URL" 2>>"$WGET_ERR") && [ -n "$API_RESPONSE" ]; then
+    # NOTE: use -nv (not -q): -q silences the very stderr we need to capture.
+    # --tries=1 --timeout=30 makes each attempt fail fast instead of letting
+    # wget burn its own internal retries (which made the loop appear to hang).
+    if API_RESPONSE=$(wget -nv --tries=1 --timeout=30 -O- "$GEOFABRIK_INDEX_URL" 2>>"$WGET_ERR") && [ -n "$API_RESPONSE" ]; then
         break
     fi
-    if API_RESPONSE=$(wget -4 -qO- "$GEOFABRIK_INDEX_URL" 2>>"$WGET_ERR") && [ -n "$API_RESPONSE" ]; then
+    if API_RESPONSE=$(wget -4 -nv --tries=1 --timeout=30 -O- "$GEOFABRIK_INDEX_URL" 2>>"$WGET_ERR") && [ -n "$API_RESPONSE" ]; then
         break
     fi
     retry_count=$((retry_count + 1))
@@ -170,23 +191,25 @@ if [ $retry_count -eq $max_retries ]; then
     echo "❌ Error: Failed to fetch region data from Geofabrik API after $max_retries attempts"
     echo ""
     echo "----- Actual error reported by wget -----"
-    tail -n 8 "$WGET_ERR" 2>/dev/null | grep -v '^$' | tail -n 5 || echo "(no error output captured)"
+    if [ -s "$WGET_ERR" ]; then
+        tail -n 5 "$WGET_ERR"
+    else
+        echo "(no error output captured)"
+    fi
     echo "-----------------------------------------"
     echo ""
-    echo "🔍 Quick diagnostics (run on the HOST, outside Docker):"
-    printf "   • DNS for download.geofabrik.de: "
-    if getent hosts download.geofabrik.de >/dev/null 2>&1; then echo "resolves OK inside container"; else echo "RESOLUTION FAILED inside container"; fi
-    echo "   • For the full handshake, run on the host:"
+    echo "🔍 Diagnostics:"
+    printf "   • DNS for download.geofabrik.de (from inside this container): "
+    dns_check_host download.geofabrik.de
+    echo "   • To test from your HOST (outside Docker), run:"
     echo "       curl -v https://download.geofabrik.de/index-v1-nogeom.json"
     echo ""
     echo "   Common causes when a browser works but this does not:"
-    echo "     - a TLS-intercepting proxy/AV whose CA wget/curl does not trust"
+    echo "     - a TLS-intercepting proxy/AV whose CA wget does not trust"
     echo "     - Docker's DNS cannot reach Geofabrik (check the host resolver)"
     echo "     - broken IPv6, or an IP/geo block on Geofabrik's side"
-    rm -f "$WGET_ERR"
     exit 1
 fi
-rm -f "$WGET_ERR"
 
 # Extract URLs for the specified region using jq
 REGION_DATA=$(echo "$API_RESPONSE" | jq -r --arg region_id "$REGION_ID" '
