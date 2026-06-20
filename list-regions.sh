@@ -47,21 +47,45 @@ main() {
     local json_data
     local retry_count=0
     local max_retries=10
-    
+    local err_file
+    err_file=$(mktemp)
+
     while [ $retry_count -lt $max_retries ]; do
-        if json_data=$(curl -s "$INDEX_URL" 2>/dev/null) && [ -n "$json_data" ]; then
+        # Try a normal (dual-stack) request first; on failure, retry forcing
+        # IPv4 (-4) to work around hosts where IPv6 is configured but broken.
+        # Real errors are captured to $err_file so we can show them if we give up.
+        if json_data=$(curl -sS --fail --max-time 30 "$INDEX_URL" 2>>"$err_file") && [ -n "$json_data" ]; then
+            break
+        fi
+        if json_data=$(curl -4 -sS --fail --max-time 30 "$INDEX_URL" 2>>"$err_file") && [ -n "$json_data" ]; then
             break
         fi
         retry_count=$((retry_count + 1))
         echo "⚠️  Retry $retry_count/$max_retries - Failed to fetch region data from Geofabrik API"
         sleep 2
     done
-    
+
     if [ $retry_count -eq $max_retries ]; then
         echo "❌ Error: Failed to fetch region data from Geofabrik API after $max_retries attempts"
-        echo "Please check your internet connection and try again."
+        echo ""
+        echo "----- Actual error reported by curl -----"
+        tail -n 5 "$err_file" 2>/dev/null | sort -u || echo "(no error output captured)"
+        echo "-----------------------------------------"
+        echo ""
+        echo "🔍 Quick diagnostics:"
+        printf "   • DNS for download.geofabrik.de: "
+        if getent hosts download.geofabrik.de >/dev/null 2>&1; then echo "resolves OK"; else echo "RESOLUTION FAILED"; fi
+        echo "   • For the full handshake, run:"
+        echo "       curl -v https://download.geofabrik.de/index-v1-nogeom.json"
+        echo ""
+        echo "   Common causes when a browser works but this does not:"
+        echo "     - a TLS-intercepting proxy/AV whose CA curl does not trust"
+        echo "     - a DNS resolver that cannot reach Geofabrik"
+        echo "     - broken IPv6, or an IP/geo block on Geofabrik's side"
+        rm -f "$err_file"
         exit 1
     fi
+    rm -f "$err_file"
     
     local total_count
     total_count=$(echo "$json_data" | jq '.features | length')
