@@ -8,8 +8,8 @@
 # on the user's machine.
 # ==============================================================================
 
-# Use OpenJDK 8 JRE for minimal footprint
-FROM openjdk:11.0.16-jre-slim
+# Maintained Java 11 runtime, pinned for reproducible builds.
+FROM eclipse-temurin:11-jre-jammy@sha256:68607af464c53b34d7dd3ee25697d53531ec46a80326be95129346ff74ae6f8f
 
 # Container metadata labels
 LABEL org.opencontainers.image.title="ATAK VNS Offline Routing Generator"
@@ -24,25 +24,22 @@ LABEL org.opencontainers.image.documentation="https://github.com/joshuafuller/at
 WORKDIR /app
 
 # Install only runtime dependencies (no maven needed in final image)
-# - git: To clone repositories if needed
-# - wget: To download map data from Geofabrik  
+# - wget: To download map data from Geofabrik
 # - zip: To create compressed archives for easy transfer
 # - jq: For JSON parsing and region URL extraction
 RUN apt-get update && apt-get install -y \
-    git \
     wget \
     zip \
     jq \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# Download pre-built GraphHopper 1.0 JARs from Maven Central
-# This eliminates the need to compile from source, significantly reducing build time
+# Download and verify the pinned GraphHopper 1.0 JAR from Maven Central.
+ARG GRAPHHOPPER_WEB_SHA256=9269d56458fcb343adf8f6f3da6e1a2daa9a09de2dc85eaef7e5e64b7af4d9ca
 RUN mkdir -p graphhopper && \
     wget -O graphhopper/graphhopper-web-1.0.jar \
     "https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/1.0/graphhopper-web-1.0.jar" && \
-    wget -O graphhopper/graphhopper-core-1.0.jar \
-    "https://repo1.maven.org/maven2/com/graphhopper/graphhopper-core/1.0/graphhopper-core-1.0.jar"
+    echo "${GRAPHHOPPER_WEB_SHA256}  graphhopper/graphhopper-web-1.0.jar" | sha256sum -c -
 
 # Create minimal GraphHopper config file for import operations
 RUN echo 'graphhopper:\n\
