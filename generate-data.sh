@@ -346,12 +346,17 @@ echo "Step 1: Downloading/updating map data for '${REGION_ID}'..."
 verify_geofabrik_download() {
     local url="$1"
     local output_file="$2"
+    local checksum_file="$3"
 
     case "$url" in
         *.osm.pbf)
             local expected_checksum
-            expected_checksum=$(wget -qO- "${url}.md5" | awk 'NR == 1 {print $1}')
+            if [ ! -s "$checksum_file" ]; then
+                wget -qO- "${url}.md5" | awk 'NR == 1 {print $1}' > "$checksum_file"
+            fi
+            expected_checksum=$(cat "$checksum_file")
             if [ -z "$expected_checksum" ] || ! echo "${expected_checksum}  ${output_file}" | md5sum -c -; then
+                rm -f "$checksum_file"
                 echo "Error: Geofabrik checksum verification failed for ${output_file##*/}"
                 exit 1
             fi
@@ -365,15 +370,17 @@ download_with_cache() {
     local cached_file="$3"
     local cache_timestamp_file="$4"
     local file_type="$5"
+    local checksum_file="${cached_file}.md5"
     
     if [ "$file_type" = "true" ]; then
         echo "✅ ${output_file##*/} is up to date (using cached version)"
         cp "$cached_file" "$output_file"
-        verify_geofabrik_download "$url" "$output_file"
+        verify_geofabrik_download "$url" "$output_file" "$checksum_file"
     else
         echo "📥 Downloading ${output_file##*/} from: ${url}"
         if wget -q --show-progress -O "$output_file" "$url"; then
-            verify_geofabrik_download "$url" "$output_file"
+            rm -f "$checksum_file"
+            verify_geofabrik_download "$url" "$output_file" "$checksum_file"
             # Cache the downloaded file
             cp "$output_file" "$cached_file"
             # Store the remote modification date for future comparison
