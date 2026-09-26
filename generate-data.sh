@@ -356,6 +356,7 @@ verify_geofabrik_download() {
             fi
             expected_checksum=$(cat "$checksum_file")
             if [ -z "$expected_checksum" ] || ! echo "${expected_checksum}  ${output_file}" | md5sum -c -; then
+                rm -f "$checksum_file"
                 echo "Error: Geofabrik checksum verification failed for ${output_file##*/}"
                 exit 1
             fi
