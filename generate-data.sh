@@ -343,6 +343,22 @@ fi
 echo "Step 1: Downloading/updating map data for '${REGION_ID}'..."
 
 # Function to download with caching
+verify_geofabrik_download() {
+    local url="$1"
+    local output_file="$2"
+
+    case "$url" in
+        *.osm.pbf)
+            local expected_checksum
+            expected_checksum=$(wget -qO- "${url}.md5" | awk 'NR == 1 {print $1}')
+            if [ -z "$expected_checksum" ] || ! echo "${expected_checksum}  ${output_file}" | md5sum -c -; then
+                echo "Error: Geofabrik checksum verification failed for ${output_file##*/}"
+                exit 1
+            fi
+            ;;
+    esac
+}
+
 download_with_cache() {
     local url="$1"
     local output_file="$2"
@@ -353,9 +369,11 @@ download_with_cache() {
     if [ "$file_type" = "true" ]; then
         echo "✅ ${output_file##*/} is up to date (using cached version)"
         cp "$cached_file" "$output_file"
+        verify_geofabrik_download "$url" "$output_file"
     else
         echo "📥 Downloading ${output_file##*/} from: ${url}"
         if wget -q --show-progress -O "$output_file" "$url"; then
+            verify_geofabrik_download "$url" "$output_file"
             # Cache the downloaded file
             cp "$output_file" "$cached_file"
             # Store the remote modification date for future comparison
