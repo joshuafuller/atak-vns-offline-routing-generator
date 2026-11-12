@@ -9,7 +9,7 @@
 # ==============================================================================
 
 # Maintained Java 11 runtime, pinned for reproducible builds.
-FROM eclipse-temurin:25-jre-jammy@sha256:927fbb98c423d9c02372595c71029b6f8c5359990cd971ce05e46022ebb2f7ae
+FROM eclipse-temurin:25-jre-jammy@sha256:a4e9fb35b48412cafbf036dabe201f22ee5e96f789e975bd6866ba0cbec45d17
 
 # Container metadata labels
 LABEL org.opencontainers.image.title="ATAK VNS Offline Routing Generator"
